@@ -1,0 +1,152 @@
+name: build-and-deploy
+# Rebuilds Medicare4Me from public sources and publishes it to Cloudflare Pages.
+# Runs on the 2nd of each month (CMS posts Part D files mid-month; insurers must update directories
+# within 30 days of a change), and on demand from the Actions tab.
+on:
+  schedule:
+    - cron: "17 9 2 * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: build
+  cancel-in-progress: false
+env:
+  M4M_YEAR: "2027"
+
+jobs:
+  plans:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install duckdb==1.1.3 pandas
+      - name: Fetch CMS sources
+        run: python pipeline/fetch_sources.py
+      - name: Build plan, drug and ZIP data
+        run: python pipeline/build.py
+      - name: Verify against CMS originals
+        run: python pipeline/verify.py
+      - uses: actions/upload-artifact@v4
+        with: { name: plans, path: site, retention-days: 7 }
+
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r networks/requirements.txt
+      - name: CMS National Provider Directory endpoints
+        run: curl -sSL --retry 3 -o /tmp/ep.zst https://directory.cms.gov/downloads/03-Endpoint.ndjson.zst
+      - name: Discover insurer directory files
+        run: mkdir -p disc && python networks/discover.py networks/contracts.json disc/sources.json --npd /tmp/ep.zst
+      - name: Map FHIR directory plans to networks
+        run: |
+          python - <<'P' > disc/fhir.txt
+          import json
+          for s in json.load(open("disc/sources.json")):
+              if s["kind"] == "fhir": print(s["key"], s["url"])
+          P
+          while read key url; do timeout 3000 python networks/fhir_crawl.py plan "$url" "$key" disc || echo "plan step failed for $key"; done < disc/fhir.txt
+      - uses: actions/upload-artifact@v4
+        with: { name: discover, path: disc, retention-days: 7 }
+
+  harvest:
+    needs: discover
+    runs-on: ubuntu-latest
+    timeout-minutes: 345
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r networks/requirements.txt
+      - uses: actions/download-artifact@v4
+        with: { name: discover, path: disc }
+      - name: Harvest MPF directory files
+        run: |
+          mkdir -p h
+          python - <<'P'
+          import json; s=json.load(open("disc/sources.json")); json.dump([x for x in s if x["kind"]=="mpf"], open("disc/mpf.json","w"))
+          P
+          timeout 9000 python networks/harvest.py disc/mpf.json h --shard ${{ matrix.shard }}/20 || echo "MPF harvest stopped"
+      - name: Crawl FHIR directory APIs
+        run: |
+          while read key url; do
+            [ -f "disc/$key.plans.json" ] && cp "disc/$key.plans.json" h/ && \
+            timeout 10800 python networks/fhir_crawl.py crawl "$url" "$key" h --shard ${{ matrix.shard }}/20 --budget 10200 || echo "crawl stopped for $key"
+          done < disc/fhir.txt
+      - uses: actions/upload-artifact@v4
+        with: { name: "harvest-${{ matrix.shard }}", path: h, retention-days: 7 }
+
+  doctors:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Download NPPES and NUCC taxonomy
+        run: |
+          url=$(curl -sSL https://download.cms.gov/nppes/NPI_Files.html | grep -oE 'NPPES_Data_Dissemination_[A-Za-z]+_[0-9]{4}(_V2)?\.zip' | head -1)
+          echo "NPPES file: $url"
+          curl -sSL --retry 3 -o /tmp/nppes.zip "https://download.cms.gov/nppes/$url"
+          nucc=$(curl -sSL "https://www.nucc.org/index.php/code-sets-mainmenu-41/provider-taxonomy-mainmenu-40/csv-mainmenu-57" | grep -oE '/images/stories/CSV/nucc_taxonomy_[0-9]+\.csv' | head -1)
+          curl -sSL --retry 3 -o /tmp/nucc.csv "https://www.nucc.org$nucc" || true
+      - name: Build doctor search index
+        run: mkdir -p docsite/data && python doctors/build_doctors.py /tmp/nppes.zip /tmp/nucc.csv docsite/data
+      - uses: actions/upload-artifact@v4
+        with: { name: doctors, path: docsite, retention-days: 7 }
+
+  assemble:
+    needs: [plans, harvest, doctors]
+    if: always() && needs.plans.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - uses: actions/download-artifact@v4
+        with: { name: plans, path: site }
+      - uses: actions/download-artifact@v4
+        with: { name: doctors, path: docsite }
+        continue-on-error: true
+      - uses: actions/download-artifact@v4
+        with: { pattern: "harvest-*", path: h, merge-multiple: true }
+        continue-on-error: true
+      - name: Build network shards and page
+        run: |
+          [ -d docsite/data/doc ] && cp -r docsite/data/doc site/data/
+          mkdir -p h && python networks/build_net.py h site/data
+          python networks/report.py h site/data/n/coverage.json networks/contracts.json > site/network_report.md || true
+          python pipeline/wrap.py
+          echo "files: $(find site -type f | wc -l)"; du -sh site
+      - name: Deploy to Cloudflare Pages
+        if: env.CF_TOKEN != ''
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npx --yes wrangler@3.90.0 pages project create medicare4me --production-branch=main || true
+          npx --yes wrangler@3.90.0 pages deploy site --project-name=medicare4me --branch=main --commit-dirty=true
+      - uses: actions/upload-artifact@v4
+        with: { name: site, path: site, retention-days: 14 }
+      - name: Save the coverage report to the results branch
+        run: |
+          cp site/network_report.md /tmp/ 2>/dev/null || echo "no report" > /tmp/network_report.md
+          cp site/data/n/coverage.json /tmp/ 2>/dev/null || echo "{}" > /tmp/coverage.json
+          cp site/verify_report.json /tmp/ 2>/dev/null || echo "[]" > /tmp/verify_report.json
+          git config user.name "medicare4me-bot"; git config user.email "actions@users.noreply.github.com"
+          git fetch origin results || true
+          if ! git checkout -B results origin/results 2>/dev/null; then git checkout --orphan results; git rm -rf --cached . >/dev/null 2>&1 || true; fi
+          mkdir -p build && cp /tmp/network_report.md /tmp/coverage.json /tmp/verify_report.json build/
+          git add build && git commit -m "build $(date -u +%FT%TZ)" && git push -f origin results

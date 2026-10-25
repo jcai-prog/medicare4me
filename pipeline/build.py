@@ -4,10 +4,10 @@
 Inputs (CMS originals, unmodified):
   src/land/.../CY2027_Landscape_202609.csv          plans by county, premiums, MOOP, deductible
   src/p27/*.txt                                      CY2027 Part D PUF (Oct 2026): plans, formularies, cost sharing
-  src/s26/pricing file PPUF_2026Q3.txt               2026 Q3 plan drug prices (latest public prices)
-  src/s26/basic drugs formulary file  PPUF_2026Q3.txt + plan information (to map 2026 NDC -> RxCUI, flags)
+  src/price/pricing.txt               2026 Q3 plan drug prices (latest public prices)
+  src/price/formulary.txt + plan information (to map 2026 NDC -> RxCUI, flags)
   src/enr/.../SCC_Enrollment_MA_2026_09.csv          SSA <-> FIPS county codes
-  src/geo/tab20_zcta520_county20_natl.txt            ZIP (ZCTA) -> county
+  src/geo/zcta_county.txt            ZIP (ZCTA) -> county
   src/stars/2027 ... Summary Ratings.csv             2027 Star Ratings
   src/rxnorm_current_concepts.txt                    NLM RxNorm names (SCD/SBD/GPCK/BPCK)
 
@@ -16,21 +16,23 @@ Output: site/data/*.json  (static shards; the browser does all cost math)
 import csv, json, os, re, statistics, collections, gzip, sys
 import duckdb
 
-SRC = os.path.join(os.path.dirname(__file__), "src")
-OUT = os.path.join(os.path.dirname(__file__), "site", "data")
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SRC = os.environ.get("M4M_SRC", os.path.join(ROOT, "work", "src"))
+OUT = os.environ.get("M4M_OUT", os.path.join(ROOT, "site", "data"))
 os.makedirs(OUT, exist_ok=True)
 for d in ("z", "c", "d"):
     os.makedirs(os.path.join(OUT, d), exist_ok=True)
 
-LAND = f"{SRC}/land/CY2027_Landscape_202609.1/CY2027_Landscape_202609.csv"
+LAND = f"{SRC}/land/landscape.csv"
 P27 = f"{SRC}/p27"
-S26 = f"{SRC}/s26"
-ENR = f"{SRC}/enr/SCC_Enrollment_MA_2026_09/SCC_Enrollment_MA_2026_09.csv"
-ZCTA = f"{SRC}/geo/tab20_zcta520_county20_natl.txt"
+S26 = f"{SRC}/price"
+ENR = f"{SRC}/enr/scc.csv"
+ZCTA = f"{SRC}/geo/zcta_county.txt"
 STARS = f"{SRC}/stars/summary.csv"
 RXN = f"{SRC}/rxnorm_current_concepts.txt"
 
 db = duckdb.connect()
+MAN = json.load(open(f"{SRC}/manifest.json")) if os.path.exists(f"{SRC}/manifest.json") else {}
 def rd(path, delim="|"):
     return f"read_csv('{path}', delim='{delim}', header=true, all_varchar=true, quote='\"')"
 
@@ -50,7 +52,7 @@ def write(rel, obj):
 
 # ---------------------------------------------------------------- geography
 STATE_ABBR = {}
-loc = db.sql(f"select * from {rd(P27 + '/geographic locator file 20261031.txt')}").fetchall()
+loc = db.sql(f"select * from {rd(P27 + '/geo.txt')}").fetchall()
 # COUNTY_CODE|STATENAME|COUNTY|...
 ssa_info = {}  # ssa -> (state name, county)
 for r in loc:
@@ -133,7 +135,7 @@ print("landscape MA plan-county rows:", sum(len(v) for v in county_plans.values(
 
 # ---------------------------------------------------------------- 2027 PUF plan info -> formulary, PUF premium/deductible (check)
 pinfo = db.sql(f"""select CONTRACT_ID, PLAN_ID, SEGMENT_ID, FORMULARY_ID, PREMIUM, DEDUCTIBLE, COUNTY_CODE, PLAN_SUPPRESSED_YN
-  from {rd(P27 + '/plan information  20261031.txt')}""").fetchall()
+  from {rd(P27 + '/plan.txt')}""").fetchall()
 formulary_of = {}
 puf_counties = collections.defaultdict(set)
 puf_prem = {}
@@ -157,7 +159,7 @@ def num(x):
     except (TypeError, ValueError): return 0.0
 CH = ["PREF", "NONPREF", "MAIL_PREF", "MAIL_NONPREF"]
 cost = collections.defaultdict(lambda: {})
-for r in db.sql(f"select * from {rd(P27 + '/beneficiary cost file  20261031.txt')}").fetchall():
+for r in db.sql(f"select * from {rd(P27 + '/cost.txt')}").fetchall():
     (c_, p_, s_, lvl, tier, days) = r[:6]
     cps = f"{c_}_{p_}_{int(s_)}"
     if days not in ("1", "2"): continue  # 1 = one-month supply, 2 = three-month supply
@@ -169,7 +171,7 @@ for r in db.sql(f"select * from {rd(P27 + '/beneficiary cost file  20261031.txt'
     t = cost[cps].setdefault(tier, {"sp": 1 if spec == "Y" else 0, "da": 1 if ded_applies == "Y" else 0})
     t[f"{lvl}_{days}"] = ch
 insulin = collections.defaultdict(dict)
-for r in db.sql(f"select * from {rd(P27 + '/insulin beneficiary cost file  20261031.txt')}").fetchall():
+for r in db.sql(f"select * from {rd(P27 + '/insulin.txt')}").fetchall():
     c_, p_, s_, tier, days = r[:5]
     if days not in ("1", "2"): continue
     cps = f"{c_}_{p_}_{int(s_)}"
@@ -190,7 +192,7 @@ f27 = db.sql(f"""select FORMULARY_ID, RXCUI, min(TIER_LEVEL_VALUE) tier,
      max(QUANTITY_LIMIT_YN) ql, max(PRIOR_AUTHORIZATION_YN) pa, max(STEP_THERAPY_YN) st, max(SELECTED_DRUG_YN) sel,
      max(case when QUANTITY_LIMIT_YN='Y' then try_cast(QUANTITY_LIMIT_AMOUNT as double) end) qla,
      max(case when QUANTITY_LIMIT_YN='Y' then try_cast(QUANTITY_LIMIT_DAYS as double) end) qld
-   from {rd(P27 + '/basic drugs formulary file  20261031.txt')} group by 1,2""").fetchall()
+   from {rd(P27 + '/formulary.txt')} group by 1,2""").fetchall()
 drugs = collections.defaultdict(lambda: {"f": [], "sel": 0, "ql30": []})
 for fid, rx, tier, ql, pa, st, sel, qla, qld in f27:
     flags = (1 if pa == "Y" else 0) | (2 if st == "Y" else 0) | (4 if ql == "Y" else 0)
@@ -203,10 +205,10 @@ for fid, rx, tier, ql, pa, st, sel, qla, qld in f27:
 
 # ---------------------------------------------------------------- 2026 prices -> (contract, rxcui) median unit cost (30-day)
 print("pricing aggregation...", file=sys.stderr)
-db.sql(f"""create table n2r as select distinct NDC, RXCUI from {rd(S26 + '/basic drugs formulary file  PPUF_2026Q3.txt')}""")
-db.sql(f"""create table sel26 as select distinct RXCUI from {rd(S26 + '/basic drugs formulary file  PPUF_2026Q3.txt')} where SELECTED_DRUG_YN='Y'""")
+db.sql(f"""create table n2r as select distinct NDC, RXCUI from {rd(S26 + '/formulary.txt')}""")
+db.sql(f"""create table sel26 as select distinct RXCUI from {rd(S26 + '/formulary.txt')} where SELECTED_DRUG_YN='Y'""")
 db.sql(f"""create table pr as select p.CONTRACT_ID c, n.RXCUI r, median(try_cast(p.UNIT_COST as double)) u, count(*) k
-   from {rd(S26 + '/pricing file PPUF_2026Q3.txt')} p join n2r n on p.NDC = n.NDC
+   from {rd(S26 + '/pricing.txt')} p join n2r n on p.NDC = n.NDC
    where p.DAYS_SUPPLY = '30' and try_cast(p.UNIT_COST as double) > 0
    group by 1, 2""")
 nat = dict(db.sql("select r, median(u) from pr group by 1").fetchall())
@@ -323,12 +325,12 @@ print("zip files", len(zb), "zips without plans", nozip, file=sys.stderr)
 
 # ---------------------------------------------------------------- meta
 meta = {
-    "year": 2027, "oop_cap": 2400, "insulin_cap": 35, "formularies": fids,
+    "year": 2027, "prices_file": MAN.get("prices", "").rsplit("/", 1)[-1], "prices_year": MAN.get("prices_year"), "oop_cap": 2400, "insulin_cap": 35, "formularies": fids,
     "built": __import__("datetime").date.today().isoformat(),
     "sources": {
         "landscape": "CMS CY2027 MA Landscape (Sep 2026 release, ReadMe 09/30/2026)",
-        "puf": "CMS Monthly Prescription Drug Plan Formulary and Pharmacy Network Information, CY2027 (posted Oct 15, 2026; 2027_20261008.zip)",
-        "prices": "CMS Quarterly Prescription Drug Plan Formulary, Pharmacy Network, and Pricing Information, 2026 Q3 (SPUF_2026_20261007.zip)",
+        "puf": "CMS Monthly Prescription Drug Plan Formulary and Pharmacy Network Information: " + MAN.get("puf", "").rsplit("/", 1)[-1],
+        "prices": "CMS Quarterly Prescription Drug Plan Formulary, Pharmacy Network, and Pricing Information: " + MAN.get("prices", "").rsplit("/", 1)[-1],
         "stars": "CMS 2027 Star Ratings data tables (Oct 8, 2026)",
         "rxnorm": "NLM RxNorm via RxNav, current concepts (Oct 24, 2026)",
         "geo": "Census 2020 ZCTA-to-county relationship file; CMS SSA/FIPS crosswalk (MA enrollment by county, Sep 2026)",
@@ -340,5 +342,5 @@ write("meta.json", meta)
 
 # diagnostics for verification
 json.dump({"unmatched": [[a, b, n] for (a, b), n in unmatched.items()], "missing_form": missing_form},
-          open(os.path.join(os.path.dirname(__file__), "build_diag.json"), "w"), indent=1)
+          open(os.path.join(OUT, "..", "build_diag.json"), "w"), indent=1)
 print("done", file=sys.stderr)

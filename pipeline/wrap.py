@@ -2,7 +2,8 @@
 """Assemble the page: inline the cost engine, write site/index.html (full document, Cloudflare Pages)
 and art/index.html (fragment, artifact preview)."""
 import os, re
-here = os.path.dirname(os.path.abspath(__file__))
+here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+os.makedirs(f"{here}/site", exist_ok=True)
 app = open(f"{here}/web/app.html").read().replace("/*__ENGINE__*/", open(f"{here}/web/engine.js").read())
 head_end = app.index("</style>") + len("</style>")
 head, body = app[:head_end], app[head_end:]

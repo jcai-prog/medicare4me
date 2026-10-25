@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Independent checks of site/data against the CMS originals (plain csv module, no shared code with build.py)."""
 import csv, json, os, random, re, collections, sys
-H = os.path.dirname(os.path.abspath(__file__)); S = f"{H}/src"; D = f"{H}/site/data"
+H = os.path.dirname(os.path.dirname(os.path.abspath(__file__))); S = os.environ.get("M4M_SRC", f"{H}/work/src"); D = f"{H}/site/data"
 out = []
 def rep(name, ok, detail=""):
     out.append((name, ok, detail)); print(("PASS " if ok else "FAIL ") + name + (" — " + detail if detail else ""))
@@ -20,7 +20,7 @@ for f in os.listdir(f"{D}/z"): zipmap.update(json.load(open(f"{D}/z/{f}")))
 
 # 1. landscape rows -> output rows (premiums, deductible, MOOP)
 loc = {}
-for r in csv.DictReader(open(f"{S}/p27/geographic locator file 20261031.txt", encoding="latin-1"), delimiter="|"):
+for r in csv.DictReader(open(f"{S}/p27/geo.txt", encoding="latin-1"), delimiter="|"):
     loc[r["COUNTY_CODE"]] = (r["STATENAME"], r["COUNTY"])
 outrows = {}
 for ssa, c in counties.items():
@@ -28,7 +28,7 @@ for ssa, c in counties.items():
         outrows[(c["st"], loc[ssa][1].lower(), row[0])] = row
 n = miss = bad = 0; bads = []
 seen_plans = set()
-for r in csv.DictReader(open(f"{S}/land/CY2027_Landscape_202609.1/CY2027_Landscape_202609.csv", encoding="utf-8-sig")):
+for r in csv.DictReader(open(f"{S}/land/landscape.csv", encoding="utf-8-sig")):
     if r["Contract Category Type"] == "PDP": continue
     n += 1
     cps = f'{r["Contract ID"]}_{r["Plan ID"]}_{int(r["Segment ID"])}'
@@ -43,7 +43,7 @@ rep("Output has no plans absent from landscape", set(plans) <= seen_plans, f"{le
 
 # 2. PUF vs landscape: Part D premium and deductible
 puf = {}
-for r in csv.DictReader(open(f"{S}/p27/plan information  20261031.txt", encoding="latin-1"), delimiter="|"):
+for r in csv.DictReader(open(f"{S}/p27/plan.txt", encoding="latin-1"), delimiter="|"):
     puf[f'{r["CONTRACT_ID"]}_{r["PLAN_ID"]}_{int(r["SEGMENT_ID"])}'] = (float(r["PREMIUM"] or 0), float(r["DEDUCTIBLE"] or 0), r["FORMULARY_ID"])
 landD = {}
 for ssa, c in counties.items():
@@ -75,7 +75,7 @@ rep("2027 overall Star Rating matches CMS table for every plan", sb == 0, f"{sb}
 
 # 4. Formulary: random sample of 3,000 raw rows -> drug shard tier/flags
 form = json.load(open(f"{D}/meta.json"))["formularies"]; fidx = {f: i for i, f in enumerate(form)}
-raw = list(csv.DictReader(open(f"{S}/p27/basic drugs formulary file  20261031.txt", encoding="latin-1"), delimiter="|"))
+raw = list(csv.DictReader(open(f"{S}/p27/formulary.txt", encoding="latin-1"), delimiter="|"))
 random.seed(7); fb = 0; bucket = {}
 mins = collections.defaultdict(lambda: 99)
 for r in raw: mins[(r["FORMULARY_ID"], r["RXCUI"])] = min(mins[(r["FORMULARY_ID"], r["RXCUI"])], int(r["TIER_LEVEL_VALUE"]))
@@ -98,5 +98,5 @@ rep("Each drug plan points at its CMS formulary", fl == 0, f"{fl} mismatches")
 for z, want in [("07030", "Hudson"), ("90210", "Los Angeles"), ("33139", "Miami-Dade"), ("10001", "New York"), ("60601", "Cook")]:
     got = [r[1] for r in zipmap.get(z, [])]
     rep(f"ZIP {z} -> {want}", want in got, str(got))
-json.dump(out, open(f"{H}/verify_report.json", "w"), indent=1)
+json.dump(out, open(f"{H}/site/verify_report.json", "w"), indent=1)
 sys.exit(0 if all(o[1] for o in out) else 1)

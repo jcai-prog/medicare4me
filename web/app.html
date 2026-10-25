@@ -155,11 +155,12 @@ footer p { margin: 0; max-width: 90ch; }
 
     <section class="step">
       <h2><span class="n">3</span>Your doctors</h2>
-      <div class="row">
-        <div style="flex:1"><label for="docName">Doctor or clinic name</label><input id="docName" type="text" placeholder="e.g. Dr. Maria Lopez, cardiology"></div>
-        <button class="btn ghost" id="addDoc" type="button">Add</button>
+      <label for="docName">Find a doctor by last name</label>
+      <div class="search-wrap">
+        <input id="docName" type="search" autocomplete="off" placeholder="e.g. Lopez, or Lopez Maria" aria-controls="docRes">
+        <div id="docRes" class="results" hidden role="listbox"></div>
       </div>
-      <p class="hint">Each plan card links to Medicare.gov, where you can confirm these doctors are in network. Automatic network matching comes in a later version.</p>
+      <p class="hint" id="docHint">Searches doctors, nurse practitioners and other clinicians who practice in your state. Each plan shows whether your doctors are in its network.</p>
       <div id="docList" class="list"></div>
     </section>
 
@@ -198,7 +199,7 @@ footer p { margin: 0; max-width: 90ch; }
 <footer><div class="wrap">
   <p><strong>Estimates, not quotes.</strong> Yearly cost = 12 months of premiums plus estimated drug costs for a full calendar year. Drug costs follow 2027 Medicare drug rules: the plan's deductible, its copays or coinsurance, a $2,400 yearly limit on covered drug costs, and insulin at no more than $35 a month. Drugs a plan doesn't cover are priced in full and flagged. Doctor visits, hospital stays and other medical costs are not included; each plan's yearly maximum out-of-pocket for medical care is shown.</p>
   <p><strong>Drug prices.</strong> Copays come from 2027 plan data. Coinsurance is applied to each plan's latest posted drug prices (2026 Q3), with CMS's negotiated 2027 prices applied to the 15 newly negotiated drugs. These will be updated when CMS posts 2027 prices.</p>
-  <p><strong>Sources.</strong> CMS 2027 Medicare Advantage Landscape; CMS 2027 Part D formulary and cost-sharing files (October 2026); CMS 2026 Q3 Part D pricing file; CMS 2027 Star Ratings (October 8, 2026); NLM RxNorm drug names; Census ZIP-to-county file. Always confirm plan details on Medicare.gov, at 1-800-MEDICARE (1-800-633-4227), or with the plan before you enroll.</p>
+  <p><strong>Sources.</strong> CMS 2027 Medicare Advantage Landscape; CMS 2027 Part D formulary and cost-sharing files (October 2026); CMS 2026 Q3 Part D pricing file; CMS 2027 Star Ratings (October 8, 2026); NLM RxNorm drug names; Census ZIP-to-county file; doctor networks from the provider directories insurers file with Medicare (machine-readable files and public FHIR directory APIs); doctor search from the CMS NPPES national provider file. Always confirm plan details on Medicare.gov, at 1-800-MEDICARE (1-800-633-4227), or with the plan before you enroll.</p>
   <p><strong>Private by design.</strong> Your ZIP code, drugs and doctors stay in this browser. Nothing is sent to us or stored on a server. Medicare4Me does not sell insurance or enroll you in a plan.</p>
   <p>Built by JChen Consulting. <span id="built"></span></p>
 </div></footer>
@@ -324,22 +325,78 @@ footer p { margin: 0; max-width: 90ch; }
   }
 
   /* ---------------- doctors ---------------- */
+  // S.docs: [{npi, name, spec, place}] (older saves may hold plain strings: kept, but not matched)
+  var taxNames = null, net = { cov: null, groups: null, shard: {} };
+  function docState() { return countyRec ? countyRec.st : (zipRows[0] && zipRows[0][2]) || ""; }
+  function specName(code) { return (taxNames && taxNames[code]) || ""; }
+  function searchDocs(q) {
+    var box = $("docRes"), st = docState();
+    var toks = q.trim().toLowerCase().replace(/^dr\.?\s+/, "").split(/[\s,]+/).filter(Boolean);
+    if (!toks.length || toks[0].length < 2) { box.hidden = true; return; }
+    if (!st) { box.innerHTML = '<div class="empty" style="padding:10px">Enter your ZIP code first, so the search can look in your state.</div>'; box.hidden = false; return; }
+    var letter = toks[0][0].toUpperCase().replace(/[^A-Z]/, "_");
+    Promise.all([getJSON("data/doc/" + st + "/" + letter + ".json"), taxNames ? Promise.resolve(taxNames) : getJSON("data/doc/tax.json")]).then(function (res) {
+      taxNames = res[1];
+      var rows = res[0], hits = [];
+      for (var i = 0; i < rows.length && hits.length < 40; i++) {
+        var r = rows[i], ln = r[1].toLowerCase(), fn = r[2].toLowerCase();
+        if (ln.indexOf(toks[0]) !== 0) continue;
+        if (toks[1] && fn.indexOf(toks[1]) !== 0) continue;
+        hits.push(r);
+      }
+      box.innerHTML = "";
+      if (!hits.length) { box.innerHTML = '<div class="empty" style="padding:10px">No clinician with that name practices in ' + esc(st) + '. Check the spelling, or search by last name only.</div>'; box.hidden = false; return; }
+      hits.forEach(function (r) {
+        var b = document.createElement("button"); b.type = "button"; b.setAttribute("role", "option");
+        var nm = r[2] + " " + r[1] + (r[3] ? ", " + r[3] : ""), sp = specName(r[4]), place = r[5] + ", " + st + " " + r[6];
+        b.innerHTML = esc(nm) + '<span class="sub">' + esc((sp ? sp + " · " : "") + place) + "</span>";
+        b.addEventListener("click", function () { addDoc({ npi: r[0], name: nm, spec: sp, place: place }); });
+        box.appendChild(b);
+      });
+      box.hidden = false;
+    }).catch(function () {
+      box.innerHTML = '<div class="empty" style="padding:10px">Doctor search isn\'t available right now. Each plan card still links to Medicare.gov to check doctors.</div>'; box.hidden = false;
+    });
+  }
+  function addDoc(d) {
+    $("docRes").hidden = true; $("docName").value = "";
+    if (S.docs.some(function (x) { return x.npi && x.npi === d.npi; })) return;
+    S.docs.push(d); S.example = false; save(); renderDocs(); loadNet().then(render);
+  }
   function renderDocs() {
     var box = $("docList"); box.innerHTML = "";
-    S.docs.forEach(function (n, i) {
+    S.docs.forEach(function (d, i) {
       var el = document.createElement("div"); el.className = "item";
-      el.innerHTML = '<div class="ctl" style="justify-content:space-between;color:var(--ink)"><span class="nm">' + esc(n) + '</span><button class="link" type="button">Remove</button></div>';
+      var nm = typeof d === "string" ? d : d.name, sub = typeof d === "string" ? "Not matched to a doctor record" : [d.spec, d.place].filter(Boolean).join(" · ");
+      el.innerHTML = '<div class="nm">' + esc(nm) + '</div><div class="ctl" style="justify-content:space-between"><span>' + esc(sub) + '</span><button class="link" type="button">Remove</button></div>';
       el.querySelector("button").addEventListener("click", function () { S.docs.splice(i, 1); save(); renderDocs(); render(); });
       box.appendChild(el);
     });
   }
-  function addDoc() {
-    var v = $("docName").value.trim(); if (!v) return;
-    S.docs.push(v); $("docName").value = ""; save(); renderDocs(); render();
+  function docNPIs() { return S.docs.filter(function (d) { return d && d.npi; }).map(function (d) { return d.npi; }); }
+  function loadNet() {
+    var npis = docNPIs();
+    if (!npis.length) return Promise.resolve();
+    var shards = {}; npis.forEach(function (n) { shards[n.slice(-2)] = 1; });
+    var jobs = [getJSON("data/n/coverage.json").then(function (c) { net.cov = c; }), getJSON("data/n/g.json").then(function (g) { net.groups = g; })];
+    Object.keys(shards).forEach(function (k) { jobs.push(getJSON("data/n/" + k + ".json").then(function (m) { net.shard[k] = m; }).catch(function () { net.shard[k] = {}; })); });
+    return Promise.all(jobs).catch(function () { net.cov = net.cov || {}; });
+  }
+  // for one plan: [{doc, status}] status: "in" | "out" | "nodata"
+  function docStatus(cps) {
+    var c = cps.split("_")[0], out = [];
+    S.docs.forEach(function (d) {
+      if (!d || !d.npi) { out.push({ doc: d, status: "nodata" }); return; }
+      if (!net.cov || !net.cov[c]) { out.push({ doc: d, status: "nodata" }); return; }
+      var gs = (net.shard[d.npi.slice(-2)] || {})[d.npi] || [], inn = false;
+      for (var i = 0; i < gs.length && !inn; i++) if (net.groups[gs[i]] && net.groups[gs[i]].indexOf(cps) >= 0) inn = true;
+      out.push({ doc: d, status: inn ? "in" : "out" });
+    });
+    return out;
   }
 
   /* ---------------- results ---------------- */
-  var FILTERS = [["hmo", "HMO"], ["ppo", "PPO"], ["s4", "4+ stars"], ["p0", "$0 premium"], ["allcov", "Covers all my drugs"]];
+  var FILTERS = [["hmo", "HMO"], ["ppo", "PPO"], ["s4", "4+ stars"], ["p0", "$0 premium"], ["allcov", "Covers all my drugs"], ["alldoc", "All my doctors in network"]];
   function renderChips() {
     var box = $("chips"); box.innerHTML = "";
     FILTERS.forEach(function (f) {
@@ -391,7 +448,10 @@ footer p { margin: 0; max-width: 90ch; }
       if (f.s4 && !((starNum(pl.st) || 0) >= 4)) return;
       if (f.p0 && premM > 0) return;
       if (f.allcov && picks.length && !allCov) return;
-      rows.push({ r: r, pl: pl, plan: plan, premM: premM, est: est, drugYr: drugYr, total: premM * 12 + drugYr, allCov: allCov });
+      var ds = S.docs.length ? docStatus(r[0]) : [];
+      var nIn = ds.filter(function (x) { return x.status === "in"; }).length;
+      if (f.alldoc && S.docs.length && nIn < S.docs.length) return;
+      rows.push({ r: r, pl: pl, plan: plan, premM: premM, est: est, drugYr: drugYr, total: premM * 12 + drugYr, allCov: allCov, ds: ds, nIn: nIn });
     });
     var key = S.sort;
     rows.sort(function (a, b) {
@@ -418,6 +478,12 @@ footer p { margin: 0; max-width: 90ch; }
     if (best) badges = '<span class="pill good">Lowest estimated cost</span>' + badges;
     if (!pl.pd) badges += '<span class="pill warn">No drug coverage</span>';
     else if (picks.length) badges += x.allCov ? '<span class="pill good">Covers all your drugs</span>' : '<span class="pill bad">Doesn\'t cover every drug</span>';
+    if (x.ds.length) {
+      var nd = x.ds.filter(function (d) { return d.status === "nodata"; }).length;
+      if (nd === x.ds.length) badges += '<span class="pill">Doctor network not available</span>';
+      else if (x.nIn === x.ds.length) badges += '<span class="pill good">All your doctors in network</span>';
+      else badges += '<span class="pill ' + (x.nIn ? "warn" : "bad") + '">' + x.nIn + " of " + x.ds.length + " doctors in network</span>";
+    }
     if (pl.sanc) badges += '<span class="pill bad">Under Medicare sanction</span>';
     if (pl.snp === "D") badges += '<span class="pill">Premium shown before Extra Help</span>';
     var ded = x.r[3], moop = x.r[4];
@@ -448,8 +514,18 @@ footer p { margin: 0; max-width: 90ch; }
       if (x.est.unknown) det += '<p class="hint">* No posted price for at least one drug on this plan, so its coinsurance could not be estimated.</p>';
       if (x.est.notCovered) det += '<p class="hint">Drugs not covered count at full price and don\'t count toward the $2,400 limit. Ask your doctor about a covered alternative, or ask the plan for an exception.</p>';
     }
-    var docs = S.docs.length ? "Confirm " + S.docs.map(esc).join(", ") + (S.docs.length > 1 ? " are" : " is") + " in this plan's network: " : "Check doctors, benefits and full plan details: ";
-    det += '<p class="docs">' + docs + '<a href="' + pfLink(x.r[0]) + '" target="_blank" rel="noopener">View this plan on Medicare.gov</a> (plan ID ' + esc(x.r[0].replace(/_/g, "-")) + ").</p>";
+    if (x.ds.length) {
+      det += '<div class="tablebox"><table class="dtable"><thead><tr><th>Doctor</th><th>Network</th></tr></thead><tbody>';
+      x.ds.forEach(function (d) {
+        var nm = typeof d.doc === "string" ? d.doc : d.doc.name;
+        var st = d.status === "in" ? '<span class="pill good">In network</span>' : d.status === "out" ? '<span class="pill bad">Not listed in network</span>' : '<span class="pill">No network data from this insurer</span>';
+        det += "<tr><td>" + esc(nm) + "</td><td>" + st + "</td></tr>";
+      });
+      det += "</tbody></table></div>";
+      var cv = net.cov && net.cov[x.r[0].split("_")[0]];
+      if (cv) det += '<p class="hint">From the directory this insurer files with Medicare (updated ' + esc(cv.date) + "). Directories can be out of date, so call the doctor's office to confirm they take this plan.</p>";
+    }
+    det += '<p class="docs">Check doctors, benefits and full plan details: <a href="' + pfLink(x.r[0]) + '" target="_blank" rel="noopener">View this plan on Medicare.gov</a> (plan ID ' + esc(x.r[0].replace(/_/g, "-")) + ").</p>";
     h += '<details class="more"' + (best ? " open" : "") + "><summary>Drug-by-drug costs and doctors</summary>" + det + "</details>";
     el.innerHTML = h;
     return el;
@@ -467,8 +543,9 @@ footer p { margin: 0; max-width: 90ch; }
   $("drugQ").addEventListener("focus", ensureIndex);
   document.addEventListener("click", function (e) { if (!e.target.closest(".search-wrap")) $("drugRes").hidden = true; });
   $("drugQ").addEventListener("keydown", function (e) { if (e.key === "Escape") $("drugRes").hidden = true; });
-  $("addDoc").addEventListener("click", addDoc);
-  $("docName").addEventListener("keydown", function (e) { if (e.key === "Enter") addDoc(); });
+  var dtm; $("docName").addEventListener("input", function (e) { clearTimeout(dtm); var v = e.target.value; dtm = setTimeout(function () { searchDocs(v); }, 200); });
+  $("docName").addEventListener("keydown", function (e) { if (e.key === "Escape") $("docRes").hidden = true; });
+  document.addEventListener("click", function (e) { if (!e.target.closest(".search-wrap")) $("docRes").hidden = true; });
   function setMail(m) { S.mail = m; $("phRetail").setAttribute("aria-pressed", String(!m)); $("phMail").setAttribute("aria-pressed", String(m)); save(); render(); }
   $("phRetail").addEventListener("click", function () { setMail(false); });
   $("phMail").addEventListener("click", function () { setMail(true); });
@@ -484,6 +561,6 @@ footer p { margin: 0; max-width: 90ch; }
   setMail(!!S.mail); renderChips(); renderDocs();
   Promise.all(S.drugs.map(function (d) { return loadDrug(d.rx); })).then(renderDrugs);
   getJSON("data/meta.json").then(function (m) { $("built").textContent = "Data built " + m.built + "."; });
-  if (S.zip) loadZip(S.zip, S.ssa); else render();
+  loadNet().then(function () { if (S.zip) loadZip(S.zip, S.ssa); else render(); });
 })();
 </script>

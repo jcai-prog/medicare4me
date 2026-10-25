@@ -39,7 +39,6 @@ jobs:
           find /tmp/keep -name "*.who.tsv" -exec sh -c 'head -200 "$1" > "$1.head" && rm "$1"' _ {} \;
           git config user.name "medicare4me-bot"; git config user.email "actions@users.noreply.github.com"
           git fetch origin results || true
-          git checkout -B results origin/results 2>/dev/null || git checkout --orphan results
-          git rm -rf --cached . >/dev/null 2>&1 || true
+          if ! git checkout -B results origin/results 2>/dev/null; then git checkout --orphan results; git rm -rf --cached . >/dev/null 2>&1 || true; fi
           rm -rf nettest && mkdir nettest && cp -r /tmp/keep/out/* nettest/
           git add nettest && git commit -m "network test $(date -u +%FT%TZ)" && git push -f origin results
