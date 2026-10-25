@@ -1,0 +1,72 @@
+[
+ [
+  "Landscape MA plan-county rows present in output",
+  true,
+  "129831 rows, 0 missing"
+ ],
+ [
+  "Premiums, deductible, MOOP match landscape exactly",
+  true,
+  "0 mismatches []"
+ ],
+ [
+  "Output has no plans absent from landscape",
+  true,
+  "5561 plans"
+ ],
+ [
+  "Part D premium: PUF vs landscape",
+  true,
+  "0 unexplained of 5561; 257 D-SNPs show $0 after Extra Help in the PUF []"
+ ],
+ [
+  "Part D deductible: PUF vs landscape",
+  true,
+  "0 differ"
+ ],
+ [
+  "2027 overall Star Rating matches CMS table for every plan",
+  true,
+  "0 mismatches"
+ ],
+ [
+  "Formulary tiers and prior-auth flags (3,000 random rows)",
+  true,
+  "0 mismatches"
+ ],
+ [
+  "Every 2027 formulary drug is searchable",
+  true,
+  "5668 drugs, 0 missing"
+ ],
+ [
+  "Each drug plan points at its CMS formulary",
+  true,
+  "0 mismatches"
+ ],
+ [
+  "ZIP 07030 -> Hudson",
+  true,
+  "['Hudson']"
+ ],
+ [
+  "ZIP 90210 -> Los Angeles",
+  true,
+  "['Los Angeles']"
+ ],
+ [
+  "ZIP 33139 -> Miami-Dade",
+  true,
+  "['Miami-Dade']"
+ ],
+ [
+  "ZIP 10001 -> New York",
+  true,
+  "['New York']"
+ ],
+ [
+  "ZIP 60601 -> Cook",
+  true,
+  "['Cook']"
+ ]
+]
