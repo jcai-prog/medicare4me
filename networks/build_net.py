@@ -46,11 +46,16 @@ for k, v in shards.items():
 json.dump(groups, open(f"{site}/n/g.json", "w"), separators=(",", ":"))
 
 cov = {}
-for f in glob.glob(f"{harvest}/*.log.json"):
-    lg = json.load(open(f))
+bad = set()
+logs = [json.load(open(f)) for f in glob.glob(f"{harvest}/*.log.json")]
+for lg in logs: bad |= set(lg.get("incomplete_plans", []))
+for lg in logs:
+    if any(p.startswith("FAILED") for p in lg.get("problems", [])): continue
     for pid in lg.get("plans", []):
-        c = pid.split("-")[0]
-        if contract_npis.get(c):
-            cov.setdefault(c, {"providers": contract_npis[c], "source": lg["url"], "date": lg.get("finished", "")[:10]})
+        if pid in bad: continue
+        k = site_key(pid); c = k.split("_")[0]
+        if k not in plans or not contract_npis.get(c): continue
+        e = cov.setdefault(c, {"providers": contract_npis[c], "source": lg["url"], "date": lg.get("finished", "")[:10], "plans": []})
+        if k not in e["plans"]: e["plans"].append(k)
 json.dump(cov, open(f"{site}/n/coverage.json", "w"), indent=0)
 print(f"providers {len(npi_plans)}, groups {len(groups)}, contracts with networks {len(cov)}")

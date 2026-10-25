@@ -8,7 +8,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -18,20 +18,19 @@ jobs:
         run: curl -sSL -o /tmp/ep.zst https://directory.cms.gov/downloads/03-Endpoint.ndjson.zst && ls -la /tmp/ep.zst
       - name: Discover MPF sources
         run: mkdir -p out && python networks/discover.py networks/contracts.json out/sources.json --npd /tmp/ep.zst 2>&1 | tee out/discover.log
-      - name: Harvest a sample of MPF sources (20 min)
+      - name: Harvest MPF sources (4 parallel, 50 min)
         run: |
           python - <<'P'
-          import json; s=json.load(open('out/sources.json')); m=[x for x in s if x['kind']=='mpf'][:12]; json.dump(m,open('out/sample.json','w'))
+          import json; s=json.load(open('out/sources.json')); m=[x for x in s if x['kind']=='mpf']; json.dump(m,open('out/mpf.json','w'))
           P
-          timeout 1200 python networks/harvest.py out/sample.json out/h || true
-      - name: FHIR plan step (UHC, Humana)
+          for i in 0 1 2 3; do (timeout 3000 python networks/harvest.py out/mpf.json out/h --shard $i/4 > out/h$i.log 2>&1 || true) & done; wait; cat out/h?.log
+      - name: UHC InsurancePlan census
+        run: timeout 900 python tools/uhc_census.py https://flex.optum.com/fhirpublic/R4 > out/uhc_census.txt 2>&1 || true
+      - name: Humana plan step with network sizes
+        run: timeout 3000 python networks/fhir_crawl.py plan https://fhir.humana.com/api humana out/f > out/humana_plan.txt 2>&1 || true
+      - name: Humana crawl speed test (15 min, 4 threads)
         run: |
-          timeout 1500 python networks/fhir_crawl.py plan https://flex.optum.com/fhirpublic/R4 uhc out/f || true
-          timeout 1500 python networks/fhir_crawl.py plan https://fhir.humana.com/api humana out/f || true
-      - name: FHIR crawl speed test (10 min each)
-        run: |
-          [ -f out/f/uhc.plans.json ] && timeout 700 python networks/fhir_crawl.py crawl https://flex.optum.com/fhirpublic/R4 uhc out/f --shard 0/400 --budget 600 || true
-          [ -f out/f/humana.plans.json ] && timeout 700 python networks/fhir_crawl.py crawl https://fhir.humana.com/api humana out/f --shard 0/400 --budget 600 || true
+          [ -f out/f/humana.plans.json ] && timeout 1000 python networks/fhir_crawl.py crawl https://fhir.humana.com/api humana out/f --shard 0/200 --budget 900 || true
       - name: Save results
         if: always()
         run: |

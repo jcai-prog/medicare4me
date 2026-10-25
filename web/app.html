@@ -387,7 +387,7 @@ footer p { margin: 0; max-width: 90ch; }
     var c = cps.split("_")[0], out = [];
     S.docs.forEach(function (d) {
       if (!d || !d.npi) { out.push({ doc: d, status: "nodata" }); return; }
-      if (!net.cov || !net.cov[c]) { out.push({ doc: d, status: "nodata" }); return; }
+      if (!net.cov || !net.cov[c] || (net.cov[c].plans && net.cov[c].plans.indexOf(cps) < 0)) { out.push({ doc: d, status: "nodata" }); return; }
       var gs = (net.shard[d.npi.slice(-2)] || {})[d.npi] || [], inn = false;
       for (var i = 0; i < gs.length && !inn; i++) if (net.groups[gs[i]] && net.groups[gs[i]].indexOf(cps) >= 0) inn = true;
       out.push({ doc: d, status: inn ? "in" : "out" });

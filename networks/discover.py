@@ -100,11 +100,16 @@ def main():
     # one source per URL; a contract may have several (plan-level manifests)
     srcs, seen = [], set()
     for f in sorted(found, key=lambda x: x["url"]):
-        if f["url"] in seen: continue
-        seen.add(f["url"])
-        key = re.sub(r"[^A-Za-z0-9]+", "_", f["url"].split("//", 1)[-1])[-90:]
-        srcs.append({"key": key, "url": f["url"], "kind": "mpf", "contracts": f["contracts"]})
+        url = f["url"]
+        kind = "mpf"
+        if re.search(r"/metadata(\?.*)?$", url) or ('"CapabilityStatement"' in f["head"]):
+            url, kind = re.sub(r"/metadata(\?.*)?$", "", url).rstrip("/"), "fhir"   # a Plan-Net API, not an MPF file
+        if url in seen: continue
+        seen.add(url)
+        key = re.sub(r"[^A-Za-z0-9]+", "_", url.split("//", 1)[-1])[-90:]
+        srcs.append({"key": key, "url": url, "kind": kind, "contracts": f["contracts"]})
     for s in seeds.get("fhir", []):
+        if s["url"] in seen: continue
         srcs.append({"key": s["key"], "url": s["url"], "kind": "fhir", "parent": s.get("parent"), "contracts": by_parent.get(s.get("parent"), [])})
     covered = {c for s in srcs for c in s["contracts"]}
     json.dump(srcs, open(out_path, "w"), indent=1)

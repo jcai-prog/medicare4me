@@ -131,13 +131,18 @@ def take_mr(item, acc):
     npi = str(item.get("npi", "")).strip()
     if not re.fullmatch(r"\d{10}", npi): acc.counts["mr_bad_npi"] += 1; return
     if str(item.get("type", "")).lower().startswith("fac"): acc.counts["mr_facility"] += 1
+    tax, zips = set(item.get("specialty") or []), zips_of(item.get("addresses"))
     for p in item.get("plans", []):
-        if str(p.get("year", YEAR)) != YEAR: continue
-        pid = norm_plan(p.get("maPlanId"))
+        if not isinstance(p, dict): continue
+        yr = p.get("year", YEAR)
+        yrs = {str(y) for y in yr} if isinstance(yr, list) else {str(yr)}
+        if YEAR not in yrs: acc.counts["mr_other_year"] += 1; continue
+        pid = norm_plan(p.get("maPlanId") or p.get("planId") or p.get("maPlanID"))
         if pid: acc.npi_plans[npi].add(pid); acc.file_plans.add(pid)
+        tax |= set(p.get("specialty") or []); zips |= zips_of(p.get("addresses"))
     nm = item.get("name") or {}
     if isinstance(nm, dict):
-        acc.person(npi, nm.get("last"), nm.get("first"), set(item.get("specialty") or []), zips_of(item.get("addresses")))
+        acc.person(npi, nm.get("last"), nm.get("first"), tax, zips)
 
 def sniff(stream):
     head = stream.read(4096)
@@ -194,11 +199,11 @@ def harvest(src, outdir):
         files = [src["url"]]
         if src.get("kind", "mpf") == "mpf":
             head, s = sniff(open_url(src["url"]))
-            raw = s.read() if len(head) < 4096 else None
             doc = None
-            if raw is not None:
+            if head.lstrip()[:1] == b"{" and b'"resourceType"' not in head[:300]:
+                raw = s.read(20_000_000)          # an index file (lists provider files); small
                 try: doc = json.loads(raw)
-                except Exception: pass
+                except Exception as e: log["problems"].append(f"index not JSON: {e!r}"[:200])
             if isinstance(doc, dict) and ("resourceType" in doc and doc.get("resourceType") == "Bundle"):
                 files = [src["url"]]
             elif doc is not None:
