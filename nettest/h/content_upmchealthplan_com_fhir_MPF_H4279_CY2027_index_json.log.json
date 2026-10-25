@@ -1,0 +1,21 @@
+{
+ "key": "content_upmchealthplan_com_fhir_MPF_H4279_CY2027_index_json",
+ "url": "https://content.upmchealthplan.com/fhir/MPF/H4279-CY2027/index.json",
+ "problems": [],
+ "started": "2026-10-25T02:59:38Z",
+ "files": [
+  "https://content.upmchealthplan.com/fhir/MPF/H4279-CY2027/2027_1.json",
+  "https://content.upmchealthplan.com/fhir/MPF/H4279-CY2027/2027_2.json",
+  "https://content.upmchealthplan.com/fhir/MPF/H4279-CY2027/2027_3.json",
+  "https://content.upmchealthplan.com/fhir/MPF/H4279-CY2027/2027_4.json",
+  "https://content.upmchealthplan.com/fhir/MPF/H4279-CY2027/2027_5.json",
+  "https://content.upmchealthplan.com/fhir/MPF/H4279-CY2027/2027_6.json"
+ ],
+ "providers": 0,
+ "plans": [],
+ "counts": {
+  "mr_entry": 57331,
+  "mr_facility": 10612
+ },
+ "finished": "2026-10-25T02:59:41Z"
+}

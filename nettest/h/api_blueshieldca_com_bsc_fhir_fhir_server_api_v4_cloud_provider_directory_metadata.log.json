@@ -1,0 +1,13 @@
+{
+ "key": "api_blueshieldca_com_bsc_fhir_fhir_server_api_v4_cloud_provider_directory_metadata",
+ "url": "https://api.blueshieldca.com/bsc/fhir/fhir-server/api/v4/cloud/provider-directory/metadata",
+ "problems": [],
+ "started": "2026-10-25T02:59:23Z",
+ "files": [
+  "https://api.blueshieldca.com/bsc/fhir/fhir-server/api/v4/cloud/provider-directory/metadata"
+ ],
+ "providers": 0,
+ "plans": [],
+ "counts": {},
+ "finished": "2026-10-25T02:59:24Z"
+}

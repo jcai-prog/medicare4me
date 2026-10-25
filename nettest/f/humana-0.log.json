@@ -1,0 +1,12 @@
+{
+ "key": "humana-0",
+ "url": "https://fhir.humana.com/api",
+ "networks": 1,
+ "problems": [],
+ "incomplete": [],
+ "providers": 0,
+ "plans": [
+  "H0292-001-000"
+ ],
+ "finished": "2026-10-25T03:09:25Z"
+}

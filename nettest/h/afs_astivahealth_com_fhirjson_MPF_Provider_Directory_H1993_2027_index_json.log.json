@@ -1,0 +1,13 @@
+{
+ "key": "afs_astivahealth_com_fhirjson_MPF_Provider_Directory_H1993_2027_index_json",
+ "url": "https://afs.astivahealth.com/fhirjson/MPF-Provider-Directory/H1993/2027/index.json",
+ "problems": [],
+ "started": "2026-10-25T02:59:12Z",
+ "files": [
+  "https://afs.astivahealth.com/fhirjson/MPF-Provider-Directory/H1993/2027/index.json"
+ ],
+ "providers": 0,
+ "plans": [],
+ "counts": {},
+ "finished": "2026-10-25T02:59:12Z"
+}

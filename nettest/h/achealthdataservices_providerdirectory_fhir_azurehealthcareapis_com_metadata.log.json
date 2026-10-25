@@ -1,0 +1,13 @@
+{
+ "key": "achealthdataservices_providerdirectory_fhir_azurehealthcareapis_com_metadata",
+ "url": "https://achealthdataservices-providerdirectory.fhir.azurehealthcareapis.com/metadata",
+ "problems": [],
+ "started": "2026-10-25T02:59:05Z",
+ "files": [
+  "https://achealthdataservices-providerdirectory.fhir.azurehealthcareapis.com/metadata"
+ ],
+ "providers": 0,
+ "plans": [],
+ "counts": {},
+ "finished": "2026-10-25T02:59:12Z"
+}
