@@ -2,7 +2,7 @@
  "key": "content_upmchealthplan_com_fhir_MPF_H7123_CY2027_index_json",
  "url": "https://content.upmchealthplan.com/fhir/MPF/H7123-CY2027/index.json",
  "problems": [],
- "started": "2026-10-25T03:14:47Z",
+ "started": "2026-10-25T03:38:57Z",
  "files": [
   "https://content.upmchealthplan.com/fhir/MPF/H7123-CY2027/2027_1.json",
   "https://content.upmchealthplan.com/fhir/MPF/H7123-CY2027/2027_2.json",
@@ -19,5 +19,5 @@
   "mr_entry": 57331,
   "mr_facility": 10612
  },
- "finished": "2026-10-25T03:14:51Z"
+ "finished": "2026-10-25T03:39:02Z"
 }
