@@ -1,7 +1,5 @@
 name: networks-test
 on:
-  push:
-    paths: ["networks/**", ".github/workflows/networks-test.yml"]
   workflow_dispatch:
 permissions:
   contents: write

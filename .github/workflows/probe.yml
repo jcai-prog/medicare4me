@@ -1,7 +1,7 @@
 name: probe
 on:
   push:
-    paths: ["tools/probe_urls.txt", "tools/probe.py", ".github/workflows/probe.yml"]
+    paths: ["tools/probe_urls.txt"]
   workflow_dispatch:
 permissions:
   contents: write
