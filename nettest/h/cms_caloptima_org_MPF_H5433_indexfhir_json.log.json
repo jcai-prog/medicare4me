@@ -2,15 +2,17 @@
  "key": "cms_caloptima_org_MPF_H5433_indexfhir_json",
  "url": "https://cms.caloptima.org/MPF/H5433/indexfhir.json",
  "problems": [],
- "started": "2026-10-25T03:03:43Z",
+ "started": "2026-10-25T03:14:45Z",
  "files": [
   "https://cms.caloptima.org/MPF/H5433/FHIR/MPFCombinedImportFile_20260929_155118.json"
  ],
- "providers": 0,
- "plans": [],
+ "providers": 13784,
+ "plans": [
+  "H5433-001-000"
+ ],
  "counts": {
   "mr_entry": 13910,
   "mr_facility": 1415
  },
- "finished": "2026-10-25T03:03:44Z"
+ "finished": "2026-10-25T03:14:47Z"
 }

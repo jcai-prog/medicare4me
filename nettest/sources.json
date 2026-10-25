@@ -1,8 +1,8 @@
 [
  {
-  "key": "achealthdataservices_providerdirectory_fhir_azurehealthcareapis_com_metadata",
-  "url": "https://achealthdataservices-providerdirectory.fhir.azurehealthcareapis.com/metadata",
-  "kind": "mpf",
+  "key": "achealthdataservices_providerdirectory_fhir_azurehealthcareapis_com",
+  "url": "https://achealthdataservices-providerdirectory.fhir.azurehealthcareapis.com",
+  "kind": "fhir",
   "contracts": []
  },
  {
@@ -14,21 +14,21 @@
   ]
  },
  {
-  "key": "api_ahp_prd_safhir_io_v1_api_provider_directory_metadata",
-  "url": "https://api-ahp-prd.safhir.io/v1/api/provider-directory/metadata",
-  "kind": "mpf",
+  "key": "api_ahp_prd_safhir_io_v1_api_provider_directory",
+  "url": "https://api-ahp-prd.safhir.io/v1/api/provider-directory",
+  "kind": "fhir",
   "contracts": []
  },
  {
-  "key": "api_icar_prd_safhir_io_v1_api_provider_directory_metadata",
-  "url": "https://api-icar-prd.safhir.io/v1/api/provider-directory/metadata",
-  "kind": "mpf",
+  "key": "api_icar_prd_safhir_io_v1_api_provider_directory",
+  "url": "https://api-icar-prd.safhir.io/v1/api/provider-directory",
+  "kind": "fhir",
   "contracts": []
  },
  {
-  "key": "api_blueshieldca_com_bsc_fhir_fhir_server_api_v4_cloud_provider_directory_metadata",
-  "url": "https://api.blueshieldca.com/bsc/fhir/fhir-server/api/v4/cloud/provider-directory/metadata",
-  "kind": "mpf",
+  "key": "api_blueshieldca_com_bsc_fhir_fhir_server_api_v4_cloud_provider_directory",
+  "url": "https://api.blueshieldca.com/bsc/fhir/fhir-server/api/v4/cloud/provider-directory",
+  "kind": "fhir",
   "contracts": []
  },
  {
@@ -180,9 +180,9 @@
   ]
  },
  {
-  "key": "fhir_iehp_org_provider_directory_metadata_format_json",
-  "url": "https://fhir.iehp.org/provider-directory/metadata?_format=json",
-  "kind": "mpf",
+  "key": "fhir_iehp_org_provider_directory",
+  "url": "https://fhir.iehp.org/provider-directory",
+  "kind": "fhir",
   "contracts": []
  },
  {
@@ -378,13 +378,13 @@
  {
   "key": "medicare_peakhealth_org_fhir_provider_directory",
   "url": "https://medicare.peakhealth.org/fhir/provider-directory",
-  "kind": "mpf",
+  "kind": "fhir",
   "contracts": []
  },
  {
-  "key": "orchestrateserver_caresource_careevolution_com_api_fhir_provider_directory_metadata",
-  "url": "https://orchestrateserver.caresource.careevolution.com/api/fhir/provider-directory/metadata",
-  "kind": "mpf",
+  "key": "orchestrateserver_caresource_careevolution_com_api_fhir_provider_directory",
+  "url": "https://orchestrateserver.caresource.careevolution.com/api/fhir/provider-directory",
+  "kind": "fhir",
   "contracts": []
  },
  {
@@ -406,7 +406,7 @@
  {
   "key": "providerdirectory_mcpartnerstx_com_fhir",
   "url": "https://providerdirectory.mcpartnerstx.com/fhir",
-  "kind": "mpf",
+  "kind": "fhir",
   "contracts": []
  },
  {

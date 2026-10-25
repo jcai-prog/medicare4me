@@ -1,0 +1,34 @@
+{
+ "key": "fhir_sapphirecareselect_com_fhir_mpf_ma_bcbsnc_H3404_2027_index_json",
+ "url": "https://fhir.sapphirecareselect.com/fhir/mpf/ma/bcbsnc/H3404/2027/index.json",
+ "problems": [],
+ "started": "2026-10-25T03:19:28Z",
+ "files": [
+  "https://fhir.sapphirecareselect.com/fhir/mpf/ma/bcbsnc/H3404/2027/InsurancePlan-1-3868f61b617ccf5a1263669030e8f5276ece49ec87bea84b18119b54e7a37b32.json",
+  "https://fhir.sapphirecareselect.com/fhir/mpf/ma/bcbsnc/H3404/2027/Location-1-a81e26f5993628c6c23cba40578414f8e53c92bc62c236508384e4393b7452e1.json",
+  "https://fhir.sapphirecareselect.com/fhir/mpf/ma/bcbsnc/H3404/2027/Location-2-5530bd11c154064a5a07e9366cfda83db60c94cb825d86780108453f6492d3ad.json",
+  "https://fhir.sapphirecareselect.com/fhir/mpf/ma/bcbsnc/H3404/2027/Location-3-60640edd6cf571e6a7fd692c92ca9759c009688933f11f4bf621257d9d7e0208.json",
+  "https://fhir.sapphirecareselect.com/fhir/mpf/ma/bcbsnc/H3404/2027/Organization-1-b89601ded1e633fb62d1efbfdd57573185cf818aadfe577ef9b54cb418d6ee46.json",
+  "https://fhir.sapphirecareselect.com/fhir/mpf/ma/bcbsnc/H3404/2027/OrganizationAffiliation-1-4541bc1f5bc4fc08a15e321f89dd6dc4a58eb05a8773bf5125aa29e59ad01ba2.json",
+  "https://fhir.sapphirecareselect.com/fhir/mpf/ma/bcbsnc/H3404/2027/Practitioner-1-9e306c3e96cf45249d8175bd80c93458e76d34c4e0d454cd8ed48c1341fcae05.json",
+  "https://fhir.sapphirecareselect.com/fhir/mpf/ma/bcbsnc/H3404/2027/PractitionerRole-1-35bc08ad56d16bbd1bda22345eb3b22f447d87f4d01f0cb28ca816b7898b2f5b.json",
+  "https://fhir.sapphirecareselect.com/fhir/mpf/ma/bcbsnc/H3404/2027/PractitionerRole-2-a461f32f32d701d7fb8476c66a0a82c3ee2695d9606c5e372101abfc69b1660e.json",
+  "https://fhir.sapphirecareselect.com/fhir/mpf/ma/bcbsnc/H3404/2027/PractitionerRole-3-c8fe6e07aba2b6fb32ca911b4119e11a9926a8526629e2fd08c52d962c235186.json",
+  "https://fhir.sapphirecareselect.com/fhir/mpf/ma/bcbsnc/H3404/2027/PractitionerRole-4-c82bcf4e9d9eee1feb2fa064d7b480e51363cda990d5720e453d5bf1f02b6f55.json"
+ ],
+ "providers": 48993,
+ "plans": [
+  "H3404-003-001",
+  "H3404-003-002",
+  "H3404-004-000"
+ ],
+ "counts": {
+  "InsurancePlan": 3,
+  "Location": 137650,
+  "Organization": 6967,
+  "OrganizationAffiliation": 15772,
+  "Practitioner": 48993,
+  "PractitionerRole": 121878
+ },
+ "finished": "2026-10-25T03:19:45Z"
+}

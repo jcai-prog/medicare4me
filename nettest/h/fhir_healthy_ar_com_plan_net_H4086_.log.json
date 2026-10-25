@@ -1,0 +1,15 @@
+{
+ "key": "fhir_healthy_ar_com_plan_net_H4086_",
+ "url": "https://fhir.healthy-ar.com/plan-net/H4086/",
+ "problems": [],
+ "started": "2026-10-25T03:18:36Z",
+ "files": [
+  "https://fhir.healthy-ar.com/plan-net/H4086/"
+ ],
+ "providers": 0,
+ "plans": [],
+ "counts": {
+  "Practitioner": 20
+ },
+ "finished": "2026-10-25T03:18:37Z"
+}

@@ -1,0 +1,28 @@
+{
+ "key": "fhirmpf_curanahealth_com_H4172_2027_",
+ "url": "https://fhirmpf.curanahealth.com/H4172/2027/",
+ "problems": [],
+ "started": "2026-10-25T03:17:48Z",
+ "files": [
+  "https://fhirmpf.curanahealth.com/H4172/2027/v20261025020214025928/InsurancePlans-1.json",
+  "https://fhirmpf.curanahealth.com/H4172/2027/v20261025020214025928/Locations-1.json",
+  "https://fhirmpf.curanahealth.com/H4172/2027/v20261025020214025928/OrganizationAffiliations-1.json",
+  "https://fhirmpf.curanahealth.com/H4172/2027/v20261025020214025928/Organizations-1.json",
+  "https://fhirmpf.curanahealth.com/H4172/2027/v20261025020214025928/PractitionerRoles-1.json",
+  "https://fhirmpf.curanahealth.com/H4172/2027/v20261025020214025928/Practitioners-1.json"
+ ],
+ "providers": 33220,
+ "plans": [
+  "H4172-001-000",
+  "H4172-003-000"
+ ],
+ "counts": {
+  "InsurancePlan": 2,
+  "Location": 13381,
+  "OrganizationAffiliation": 1182,
+  "Organization": 1178,
+  "PractitionerRole": 33573,
+  "Practitioner": 33220
+ },
+ "finished": "2026-10-25T03:17:51Z"
+}

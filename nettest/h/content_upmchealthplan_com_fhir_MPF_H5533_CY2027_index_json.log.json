@@ -1,0 +1,34 @@
+{
+ "key": "content_upmchealthplan_com_fhir_MPF_H5533_CY2027_index_json",
+ "url": "https://content.upmchealthplan.com/fhir/MPF/H5533-CY2027/index.json",
+ "problems": [],
+ "started": "2026-10-25T03:16:31Z",
+ "files": [
+  "https://content.upmchealthplan.com/fhir/MPF/H5533-CY2027/2027_1.json",
+  "https://content.upmchealthplan.com/fhir/MPF/H5533-CY2027/2027_2.json",
+  "https://content.upmchealthplan.com/fhir/MPF/H5533-CY2027/2027_3.json",
+  "https://content.upmchealthplan.com/fhir/MPF/H5533-CY2027/2027_4.json",
+  "https://content.upmchealthplan.com/fhir/MPF/H5533-CY2027/2027_5.json",
+  "https://content.upmchealthplan.com/fhir/MPF/H5533-CY2027/2027_6.json",
+  "https://content.upmchealthplan.com/fhir/MPF/H5533-CY2027/2027_7.json",
+  "https://content.upmchealthplan.com/fhir/MPF/H5533-CY2027/2027_8.json"
+ ],
+ "providers": 71952,
+ "plans": [
+  "H5533-003-000",
+  "H5533-005-000",
+  "H5533-008-000",
+  "H5533-013-000",
+  "H5533-016-001",
+  "H5533-016-002",
+  "H5533-017-001",
+  "H5533-017-002",
+  "H5533-019-000",
+  "H5533-020-000"
+ ],
+ "counts": {
+  "mr_entry": 76063,
+  "mr_facility": 10853
+ },
+ "finished": "2026-10-25T03:16:48Z"
+}

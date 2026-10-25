@@ -1,0 +1,23 @@
+{
+ "key": "www_molinahealthcare_com_cmsjson_378245_MCareFHIR_H3093_index_json",
+ "url": "https://www.molinahealthcare.com/cmsjson/378245/MCareFHIR/H3093/index.json",
+ "problems": [],
+ "started": "2026-10-25T03:20:32Z",
+ "files": [
+  "https://www.molinahealthcare.com/cmsjson/378245/MCareFHIR/H3093/Provider-1.json",
+  "https://www.molinahealthcare.com/cmsjson/378245/MCareFHIR/H3093/Provider-2.json"
+ ],
+ "providers": 46627,
+ "plans": [
+  "H3093-002-000"
+ ],
+ "counts": {
+  "Practitioner": 47067,
+  "PractitionerRole": 51892,
+  "Organization": 9839,
+  "Location": 29173,
+  "OrganizationAffiliation": 5334,
+  "InsurancePlan": 2
+ },
+ "finished": "2026-10-25T03:20:36Z"
+}
