@@ -89,8 +89,10 @@ def take_fhir(res, acc):
     t = res.get("resourceType")
     acc.counts[t] += 1
     if t == "InsurancePlan":
-        per = (res.get("period") or {}).get("start", "")
-        if per and not per.startswith(YEAR): acc.counts["plan_other_year"] += 1; return
+        per = res.get("period") or {}
+        st, en = str(per.get("start", ""))[:4], str(per.get("end", ""))[:4]
+        # directory files are per contract year; only skip plans clearly for another year
+        if (st and st > YEAR) or (en and en < YEAR): acc.counts["plan_other_year"] += 1; return
         ids = [norm_plan(i.get("value")) for i in res.get("identifier", [])] + [norm_plan(a) for a in res.get("alias", [])]
         ids = [p for p in ids if p]
         nets = [ref_id(n.get("reference")) for n in res.get("network", [])]

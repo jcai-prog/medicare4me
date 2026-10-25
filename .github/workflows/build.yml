@@ -3,6 +3,8 @@ name: build-and-deploy
 # Runs on the 2nd of each month (CMS posts Part D files mid-month; insurers must update directories
 # within 30 days of a change), and on demand from the Actions tab.
 on:
+  push:
+    paths: ["trigger/build"]
   schedule:
     - cron: "17 9 2 * *"
   workflow_dispatch:
@@ -81,7 +83,7 @@ jobs:
         run: |
           while read key url; do
             [ -f "disc/$key.plans.json" ] && cp "disc/$key.plans.json" h/ && \
-            timeout 10800 python networks/fhir_crawl.py crawl "$url" "$key" h --shard ${{ matrix.shard }}/20 --budget 10200 || echo "crawl stopped for $key"
+            M4M_THREADS=6 timeout 10800 python networks/fhir_crawl.py crawl "$url" "$key" h --shard ${{ matrix.shard }}/20 --budget 10200 || echo "crawl stopped for $key"
           done < disc/fhir.txt
       - uses: actions/upload-artifact@v4
         with: { name: "harvest-${{ matrix.shard }}", path: h, retention-days: 7 }
