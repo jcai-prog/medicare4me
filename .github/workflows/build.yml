@@ -119,7 +119,14 @@ jobs:
           nucc=$(curl -sSL "https://www.nucc.org/index.php/code-sets-mainmenu-41/provider-taxonomy-mainmenu-40/csv-mainmenu-57" | grep -oE '/images/stories/CSV/nucc_taxonomy_[0-9]+\.csv' | head -1)
           curl -sSL --retry 3 -o /tmp/nucc.csv "https://www.nucc.org$nucc" || true
       - name: Build doctor search index
-        run: mkdir -p docsite/data && python doctors/build_doctors.py /tmp/nppes.zip /tmp/nucc.csv docsite/data
+        run: |
+          mkdir -p docsite/data
+          if python -c "import zipfile,sys; zipfile.ZipFile('/tmp/nppes.zip')" 2>/dev/null; then
+            python doctors/build_doctors.py /tmp/nppes.zip /tmp/nucc.csv docsite/data
+          else
+            echo "NPPES file unavailable this month; the doctor index will be built from insurer directories"
+          fi
+          cp /tmp/nucc.csv docsite/ 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         with: { name: doctors, path: docsite, retention-days: 7 }
       - name: Report job status
@@ -150,8 +157,10 @@ jobs:
         continue-on-error: true
       - name: Build network shards and page
         run: |
-          [ -d docsite/data/doc ] && cp -r docsite/data/doc site/data/
-          mkdir -p h && python networks/build_net.py h site/data
+          mkdir -p h
+          if [ -d docsite/data/doc ]; then cp -r docsite/data/doc site/data/;
+          else python doctors/build_from_who.py h sources/tab20_zcta520_county20_natl.txt docsite/nucc.csv site/data; fi
+          python networks/build_net.py h site/data
           python networks/report.py h site/data/n/coverage.json networks/contracts.json > site/network_report.md || true
           python pipeline/wrap.py
           echo "files: $(find site -type f | wc -l)"; du -sh site

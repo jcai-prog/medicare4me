@@ -1,0 +1,58 @@
+name: assemble-only
+# Re-runs only the final step (network shards, doctor index, page, deploy) using the data collected by an
+# earlier build-and-deploy run. Put that run's ID in trigger/assemble and push.
+on:
+  push:
+    paths: ["trigger/assemble"]
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - id: rid
+        run: echo "id=$(tr -dc 0-9 < trigger/assemble)" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
+        with: { name: plans, path: site, run-id: "${{ steps.rid.outputs.id }}", github-token: "${{ github.token }}" }
+      - uses: actions/download-artifact@v4
+        with: { name: doctors, path: docsite, run-id: "${{ steps.rid.outputs.id }}", github-token: "${{ github.token }}" }
+        continue-on-error: true
+      - uses: actions/download-artifact@v4
+        with: { pattern: "harvest-*", path: h, merge-multiple: true, run-id: "${{ steps.rid.outputs.id }}", github-token: "${{ github.token }}" }
+        continue-on-error: true
+      - name: Build network shards and page
+        run: |
+          mkdir -p h
+          if [ -d docsite/data/doc ]; then cp -r docsite/data/doc site/data/;
+          else python doctors/build_from_who.py h sources/tab20_zcta520_county20_natl.txt docsite/nucc.csv site/data; fi
+          python networks/build_net.py h site/data
+          python networks/report.py h site/data/n/coverage.json networks/contracts.json > site/network_report.md || true
+          python pipeline/wrap.py
+          echo "files: $(find site -type f | wc -l)"; du -sh site
+      - name: Deploy to Cloudflare Pages
+        if: env.CF_TOKEN != ''
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npx --yes wrangler@3.90.0 pages project create medicare4me --production-branch=main || true
+          npx --yes wrangler@3.90.0 pages deploy site --project-name=medicare4me --branch=main --commit-dirty=true
+      - uses: actions/upload-artifact@v4
+        with: { name: site, path: site, retention-days: 14 }
+      - name: Save the coverage report to the results branch
+        run: |
+          cp site/network_report.md /tmp/ 2>/dev/null || echo "no report" > /tmp/network_report.md
+          cp site/data/n/coverage.json /tmp/ 2>/dev/null || echo "{}" > /tmp/coverage.json
+          cp site/verify_report.json /tmp/ 2>/dev/null || echo "[]" > /tmp/verify_report.json
+          git config user.name "medicare4me-bot"; git config user.email "actions@users.noreply.github.com"
+          git fetch origin results || true
+          if ! git checkout -B results origin/results 2>/dev/null; then git checkout --orphan results; git rm -rf --cached . >/dev/null 2>&1 || true; fi
+          mkdir -p build && cp /tmp/network_report.md /tmp/coverage.json /tmp/verify_report.json build/
+          git add build && git commit -m "build $(date -u +%FT%TZ)" && git push -f origin results

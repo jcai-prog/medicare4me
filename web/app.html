@@ -160,7 +160,7 @@ footer p { margin: 0; max-width: 90ch; }
         <input id="docName" type="search" autocomplete="off" placeholder="e.g. Lopez, or Lopez Maria" aria-controls="docRes">
         <div id="docRes" class="results" hidden role="listbox"></div>
       </div>
-      <p class="hint" id="docHint">Searches doctors, nurse practitioners and other clinicians who practice in your state. Each plan shows whether your doctors are in its network.</p>
+      <p class="hint" id="docHint">Searches doctors, nurse practitioners and other clinicians who practice in your state. Each plan shows whether your doctors are in its network. If you can't find your doctor, each plan card links to Medicare.gov to check.</p>
       <div id="docList" class="list"></div>
     </section>
 
@@ -348,7 +348,7 @@ footer p { margin: 0; max-width: 90ch; }
       if (!hits.length) { box.innerHTML = '<div class="empty" style="padding:10px">No clinician with that name practices in ' + esc(st) + '. Check the spelling, or search by last name only.</div>'; box.hidden = false; return; }
       hits.forEach(function (r) {
         var b = document.createElement("button"); b.type = "button"; b.setAttribute("role", "option");
-        var nm = r[2] + " " + r[1] + (r[3] ? ", " + r[3] : ""), sp = specName(r[4]), place = r[5] + ", " + st + " " + r[6];
+        var nm = r[2] + " " + r[1] + (r[3] ? ", " + r[3] : ""), sp = specName(r[4]), place = (r[5] ? r[5] + ", " : "") + st + " " + r[6];
         b.innerHTML = esc(nm) + '<span class="sub">' + esc((sp ? sp + " · " : "") + place) + "</span>";
         b.addEventListener("click", function () { addDoc({ npi: r[0], name: nm, spec: sp, place: place }); });
         box.appendChild(b);
