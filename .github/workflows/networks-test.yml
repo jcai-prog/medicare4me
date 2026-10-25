@@ -1,0 +1,45 @@
+name: networks-test
+on:
+  push:
+    paths: ["networks/**", ".github/workflows/networks-test.yml"]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r networks/requirements.txt
+      - name: NPD endpoint file
+        run: curl -sSL -o /tmp/ep.zst https://directory.cms.gov/downloads/03-Endpoint.ndjson.zst && ls -la /tmp/ep.zst
+      - name: Discover MPF sources
+        run: mkdir -p out && python networks/discover.py networks/contracts.json out/sources.json --npd /tmp/ep.zst 2>&1 | tee out/discover.log
+      - name: Harvest a sample of MPF sources (20 min)
+        run: |
+          python - <<'P'
+          import json; s=json.load(open('out/sources.json')); m=[x for x in s if x['kind']=='mpf'][:12]; json.dump(m,open('out/sample.json','w'))
+          P
+          timeout 1200 python networks/harvest.py out/sample.json out/h || true
+      - name: FHIR plan step (UHC, Humana)
+        run: |
+          timeout 1500 python networks/fhir_crawl.py plan https://flex.optum.com/fhirpublic/R4 uhc out/f || true
+          timeout 1500 python networks/fhir_crawl.py plan https://fhir.humana.com/api humana out/f || true
+      - name: FHIR crawl speed test (10 min each)
+        run: |
+          [ -f out/f/uhc.plans.json ] && timeout 700 python networks/fhir_crawl.py crawl https://flex.optum.com/fhirpublic/R4 uhc out/f --shard 0/400 --budget 600 || true
+          [ -f out/f/humana.plans.json ] && timeout 700 python networks/fhir_crawl.py crawl https://fhir.humana.com/api humana out/f --shard 0/400 --budget 600 || true
+      - name: Save results
+        if: always()
+        run: |
+          mkdir -p /tmp/keep && cp -r out /tmp/keep/ ; find /tmp/keep -name "*.net.tsv" -size +2M -exec sh -c 'head -c 2000000 "$1" > "$1.head" && rm "$1"' _ {} \;
+          find /tmp/keep -name "*.who.tsv" -exec sh -c 'head -200 "$1" > "$1.head" && rm "$1"' _ {} \;
+          git config user.name "medicare4me-bot"; git config user.email "actions@users.noreply.github.com"
+          git fetch origin results || true
+          git checkout -B results origin/results 2>/dev/null || git checkout --orphan results
+          git rm -rf --cached . >/dev/null 2>&1 || true
+          rm -rf nettest && mkdir nettest && cp -r /tmp/keep/out/* nettest/
+          git add nettest && git commit -m "network test $(date -u +%FT%TZ)" && git push -f origin results

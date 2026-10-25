@@ -1,0 +1,62 @@
+{
+ "_note": "Public MPF provider directory index URLs and Plan-Net FHIR APIs. URLs with a contract ID are also tried for the same organization's other contracts.",
+ "mpf": [
+  {
+   "url": "https://fhirmpf.curanahealth.com/H9917/2027/"
+  },
+  {
+   "url": "https://fhirmpf.curanahealth.com/H4172/2027/"
+  },
+  {
+   "url": "https://fhirmpf.curanahealth.com/H6345/2027/"
+  },
+  {
+   "url": "https://fhirmpf.curanahealth.com/H1372/2027/"
+  },
+  {
+   "url": "https://www.molinahealthcare.com/cmsjson/378245/MCareFHIR/H4371/index.json"
+  },
+  {
+   "url": "https://www.molinahealthcare.com/cmsjson/378245/MCareFHIR/H5628/index.json"
+  },
+  {
+   "url": "https://www.molinahealthcare.com/cmsjson/378245/MCareFHIR/H3038/index.json"
+  },
+  {
+   "url": "https://www.molinahealthcare.com/cmsjson/378245/MCareFHIR/H8845/index.json"
+  },
+  {
+   "url": "https://uat120.fhir.edifecsfedcloud.com/gchp_cms/cms-report/H9623/index.json"
+  },
+  {
+   "url": "https://content.upmchealthplan.com/fhir/MPF/H5533-CY2027/index.json"
+  },
+  {
+   "url": "https://content.upmchealthplan.com/fhir/MPF/H3907-CY2027/index.json"
+  },
+  {
+   "url": "https://fhir-app-portal.elderserve.aidbox.app/mpf-provider-directory/H6776/2027/index.json"
+  },
+  {
+   "url": "https://provider.bcbst.com/cms_assets/fhir/h7917_index.json"
+  },
+  {
+   "url": "https://wadcdnstorageprod.blob.core.windows.net/bswhp/JSON/BSWHP_CMS_MPF_H8142_2027_Index_FHIR.json"
+  },
+  {
+   "url": "https://wadcdnstorageprod.blob.core.windows.net/bswhp/JSON/BSWHP_CMS_MPF_H8142_2026_Index_FHIR.json"
+  }
+ ],
+ "fhir": [
+  {
+   "key": "uhc",
+   "url": "https://flex.optum.com/fhirpublic/R4",
+   "parent": "UnitedHealth Group, Inc."
+  },
+  {
+   "key": "humana",
+   "url": "https://fhir.humana.com/api",
+   "parent": "Humana Inc."
+  }
+ ]
+}

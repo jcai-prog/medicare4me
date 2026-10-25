@@ -1,0 +1,2 @@
+ijson==3.3.0
+zstandard==0.23.0

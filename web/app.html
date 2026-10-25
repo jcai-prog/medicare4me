@@ -1,0 +1,489 @@
+<title>Medicare4Me</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Compare 2027 Medicare Advantage plans by your drugs, your doctors, total yearly cost and Star Ratings. Free and private: your list never leaves your device.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap">
+<style>
+/* Layout: two-column workbench (your details | plan results), single column under 900px. Large type for older eyes. */
+:root {
+  --bg: #f4f7f8; --surface: #ffffff; --ink: #142530; --muted: #52646f; --line: #d5dee3;
+  --accent: #0a5f86; --accent-ink: #ffffff; --accent-soft: #e2eff5;
+  --good: #1f7a4d; --good-soft: #e3f3ea; --warn: #9a5b00; --warn-soft: #fbf0dc; --bad: #a3322a; --bad-soft: #f8e4e2;
+  --star: #b07a12;
+  --f-display: "Newsreader", Georgia, "Times New Roman", serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e171d; --surface: #15222a; --ink: #e6eef2; --muted: #9fb2bd; --line: #2a3a44;
+  --accent: #5fb3dc; --accent-ink: #06141b; --accent-soft: #173343;
+  --good: #6fcf9c; --good-soft: #15312a; --warn: #e8b35c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3a1d1b;
+  --star: #e2b44f; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0e171d; --surface: #15222a; --ink: #e6eef2; --muted: #9fb2bd; --line: #2a3a44;
+  --accent: #5fb3dc; --accent-ink: #06141b; --accent-soft: #173343;
+  --good: #6fcf9c; --good-soft: #15312a; --warn: #e8b35c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3a1d1b;
+  --star: #e2b44f; color-scheme: dark }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 18px; line-height: 1.5; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.top { border-bottom: 1px solid var(--line); background: var(--surface); }
+header.top .wrap { padding-block: 14px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; }
+.brand { font-family: var(--f-display); font-weight: 600; font-size: 1.9rem; letter-spacing: -0.01em; margin: 0; }
+.brand b { color: var(--accent); font-weight: 600; }
+.tag { color: var(--muted); font-size: 0.95rem; margin: 0; }
+.notice { font-size: 0.85rem; color: var(--muted); margin: 0 0 0 auto; }
+main.wrap { padding-block: 20px 40px; display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 900px) { main.wrap { grid-template-columns: minmax(0, 1fr); } .notice { margin-left: 0; } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: grid; gap: 22px; }
+@media (min-width: 901px) { .panel { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 24px); overflow: auto; } }
+.step h2 { font-family: var(--f-display); font-weight: 600; font-size: 1.3rem; margin: 0 0 8px; display: flex; gap: 10px; align-items: baseline; }
+.step h2 .n { font-family: var(--f-body); font-size: 0.8rem; font-weight: 700; color: var(--accent); border: 1.5px solid var(--accent); border-radius: 999px; width: 1.6rem; height: 1.6rem; display: inline-grid; place-items: center; flex: none; transform: translateY(-2px); }
+label { font-weight: 700; display: block; margin-bottom: 4px; font-size: 0.95rem; }
+input[type=text], input[type=number], input[type=search], select {
+  font: inherit; font-size: 1rem; color: var(--ink); background: var(--bg); border: 1.5px solid var(--line); border-radius: 8px; padding: 9px 11px; width: 100%; }
+input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.hint { color: var(--muted); font-size: 0.88rem; margin: 6px 0 0; }
+button { font: inherit; cursor: pointer; }
+.btn { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 8px; padding: 9px 14px; font-weight: 700; font-size: 0.95rem; }
+.btn.ghost { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
+.link { background: none; border: 0; color: var(--accent); text-decoration: underline; padding: 0; font-size: 0.9rem; }
+.row { display: flex; gap: 8px; align-items: end; }
+.row > * { min-width: 0; }
+.search-wrap { position: relative; }
+.results { position: absolute; z-index: 5; left: 0; right: 0; top: 100%; margin-top: 4px; background: var(--surface); border: 1.5px solid var(--line); border-radius: 8px; max-height: 320px; overflow: auto; box-shadow: 0 8px 24px rgb(0 0 0 / 0.15); }
+.results button { display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 9px 11px; color: var(--ink); font-size: 0.95rem; }
+.results button:hover, .results button:focus-visible { background: var(--accent-soft); }
+.results .sub { display: block; color: var(--muted); font-size: 0.82rem; }
+.list { display: grid; gap: 8px; margin-top: 10px; }
+.item { border: 1px solid var(--line); border-radius: 8px; padding: 10px; display: grid; gap: 6px; background: var(--bg); }
+.item .nm { font-weight: 700; font-size: 0.95rem; overflow-wrap: anywhere; }
+.item .ctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 0.88rem; color: var(--muted); }
+.item .ctl input { width: 5.5rem; padding: 5px 8px; }
+.empty { color: var(--muted); font-size: 0.92rem; font-style: italic; }
+.opts { display: grid; gap: 8px; font-size: 0.95rem; }
+.opts label { font-weight: 400; display: flex; gap: 8px; align-items: center; margin: 0; }
+.opts input { width: 1.15rem; height: 1.15rem; accent-color: var(--accent); }
+.seg { display: inline-flex; border: 1.5px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: var(--bg); color: var(--ink); padding: 7px 12px; font-size: 0.9rem; }
+.seg button[aria-pressed=true] { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+.example { background: var(--warn-soft); color: var(--warn); border-radius: 8px; padding: 8px 10px; font-size: 0.88rem; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+.example button { color: var(--warn); }
+
+.res-head { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; justify-content: space-between; margin-bottom: 14px; }
+.res-head h2 { font-family: var(--f-display); font-weight: 600; font-size: 1.6rem; margin: 0; text-wrap: balance; }
+.res-head .meta { color: var(--muted); font-size: 0.92rem; margin: 2px 0 0; }
+.res-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.res-tools select { width: auto; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 4px 12px; font-size: 0.88rem; }
+.chip[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); font-weight: 700; }
+.cards { display: grid; gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; display: grid; gap: 12px; }
+.card.best { border: 2px solid var(--accent); }
+.c-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 18px; align-items: start; }
+.c-name { font-family: var(--f-display); font-weight: 600; font-size: 1.25rem; margin: 0; overflow-wrap: anywhere; line-height: 1.25; }
+.c-org { color: var(--muted); font-size: 0.9rem; margin: 2px 0 0; }
+.c-cost { text-align: right; }
+.c-cost .big { font-size: 1.7rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.c-cost .lbl { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.badges { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.pill { font-size: 0.78rem; font-weight: 700; border-radius: 999px; padding: 2px 9px; background: var(--accent-soft); color: var(--ink); }
+.pill.good { background: var(--good-soft); color: var(--good); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.pill.bad { background: var(--bad-soft); color: var(--bad); }
+.stars { display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; }
+.stars .s { position: relative; display: inline-block; color: var(--line); letter-spacing: 1px; font-size: 1.05rem; line-height: 1; white-space: nowrap; }
+.stars .s .on { position: absolute; inset: 0 auto 0 0; overflow: hidden; color: var(--star); }
+.figs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; border-top: 1px solid var(--line); padding-top: 10px; }
+@media (max-width: 560px) { .figs { grid-template-columns: repeat(2, minmax(0, 1fr)); } .c-top { grid-template-columns: minmax(0, 1fr); } .c-cost { text-align: left; } }
+.fig .k { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.fig .v { font-weight: 700; font-variant-numeric: tabular-nums; }
+details.more summary { cursor: pointer; color: var(--accent); font-weight: 700; font-size: 0.95rem; }
+.dtable { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-top: 8px; }
+.dtable th, .dtable td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.dtable th { color: var(--muted); font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.dtable td.num, .dtable th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tablebox { overflow-x: auto; }
+.docs { font-size: 0.9rem; margin-top: 10px; }
+.docs a { color: var(--accent); }
+.nores { background: var(--surface); border: 1px dashed var(--line); border-radius: var(--radius); padding: 24px; color: var(--muted); }
+footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 0.85rem; }
+footer .wrap { padding-block: 18px 28px; display: grid; gap: 8px; max-width: 1240px; }
+footer p { margin: 0; max-width: 90ch; }
+.more-btn { justify-self: center; }
+.jump a { color: var(--accent); font-weight: 700; }
+@media (min-width: 901px) { .jump { display: none; } }
+@media (prefers-reduced-motion: no-preference) { .card { transition: border-color .15s; } }
+</style>
+
+<header class="top"><div class="wrap">
+  <h1 class="brand">Medicare<b>4</b>Me</h1>
+  <p class="tag">2027 Medicare Advantage plans, priced for your drugs</p>
+  <p class="notice">Independent tool. Not affiliated with or endorsed by Medicare or the U.S. government.</p>
+</div></header>
+
+<main class="wrap">
+  <aside class="panel" aria-label="Your details">
+    <div id="exampleBar" class="example" hidden>
+      <span>Showing an example. Replace the ZIP code and drugs with your own.</span>
+      <button class="link" id="clearAll" type="button">Start fresh</button>
+    </div>
+
+    <section class="step">
+      <h2><span class="n">1</span>Where you live</h2>
+      <label for="zip">ZIP code</label>
+      <input id="zip" type="text" inputmode="numeric" maxlength="5" autocomplete="postal-code" placeholder="e.g. 07030">
+      <div id="countyBox" hidden style="margin-top:8px">
+        <label for="county">County</label>
+        <select id="county"></select>
+      </div>
+      <p class="hint" id="zipMsg"></p>
+      <p class="hint jump"><a href="#plans">Jump to plans</a></p>
+    </section>
+
+    <section class="step">
+      <h2><span class="n">2</span>Your drugs</h2>
+      <label for="drugQ">Add a drug</label>
+      <div class="search-wrap">
+        <input id="drugQ" type="search" autocomplete="off" placeholder="Type a name, e.g. Eliquis or metformin" aria-controls="drugRes">
+        <div id="drugRes" class="results" hidden role="listbox"></div>
+      </div>
+      <p class="hint">Pick your exact strength and form. Then enter how many you use in a month (twice a day is 60).</p>
+      <div id="drugList" class="list"></div>
+    </section>
+
+    <section class="step">
+      <h2><span class="n">3</span>Your doctors</h2>
+      <div class="row">
+        <div style="flex:1"><label for="docName">Doctor or clinic name</label><input id="docName" type="text" placeholder="e.g. Dr. Maria Lopez, cardiology"></div>
+        <button class="btn ghost" id="addDoc" type="button">Add</button>
+      </div>
+      <p class="hint">Each plan card links to Medicare.gov, where you can confirm these doctors are in network. Automatic network matching comes in a later version.</p>
+      <div id="docList" class="list"></div>
+    </section>
+
+    <section class="step">
+      <h2><span class="n">4</span>Options</h2>
+      <div class="opts">
+        <div><span style="font-weight:700;font-size:.95rem;display:block;margin-bottom:4px">How you fill prescriptions</span>
+          <div class="seg" role="group" aria-label="Pharmacy">
+            <button type="button" id="phRetail" aria-pressed="true">Retail pharmacy, monthly</button>
+            <button type="button" id="phMail" aria-pressed="false">Mail order, 90-day</button>
+          </div></div>
+        <label><input type="checkbox" id="optSnp"> Include Special Needs Plans (for people with Medicaid, certain chronic conditions, or living in a facility)</label>
+        <label><input type="checkbox" id="optNoD"> Include plans without drug coverage</label>
+      </div>
+    </section>
+  </aside>
+
+  <section id="plans" aria-live="polite" aria-label="Plans">
+    <div class="res-head">
+      <div><h2 id="resTitle">Plans near you</h2><p class="meta" id="resMeta"></p></div>
+      <div class="res-tools">
+        <label for="sort" style="margin:0;font-weight:400;font-size:.9rem">Sort by</label>
+        <select id="sort">
+          <option value="total">Estimated yearly cost</option>
+          <option value="stars">Star Rating</option>
+          <option value="premium">Monthly premium</option>
+          <option value="moop">Max out-of-pocket</option>
+        </select>
+      </div>
+    </div>
+    <div class="chips" id="chips" style="margin-bottom:12px"></div>
+    <div id="cards" class="cards"></div>
+  </section>
+</main>
+
+<footer><div class="wrap">
+  <p><strong>Estimates, not quotes.</strong> Yearly cost = 12 months of premiums plus estimated drug costs for a full calendar year. Drug costs follow 2027 Medicare drug rules: the plan's deductible, its copays or coinsurance, a $2,400 yearly limit on covered drug costs, and insulin at no more than $35 a month. Drugs a plan doesn't cover are priced in full and flagged. Doctor visits, hospital stays and other medical costs are not included; each plan's yearly maximum out-of-pocket for medical care is shown.</p>
+  <p><strong>Drug prices.</strong> Copays come from 2027 plan data. Coinsurance is applied to each plan's latest posted drug prices (2026 Q3), with CMS's negotiated 2027 prices applied to the 15 newly negotiated drugs. These will be updated when CMS posts 2027 prices.</p>
+  <p><strong>Sources.</strong> CMS 2027 Medicare Advantage Landscape; CMS 2027 Part D formulary and cost-sharing files (October 2026); CMS 2026 Q3 Part D pricing file; CMS 2027 Star Ratings (October 8, 2026); NLM RxNorm drug names; Census ZIP-to-county file. Always confirm plan details on Medicare.gov, at 1-800-MEDICARE (1-800-633-4227), or with the plan before you enroll.</p>
+  <p><strong>Private by design.</strong> Your ZIP code, drugs and doctors stay in this browser. Nothing is sent to us or stored on a server. Medicare4Me does not sell insurance or enroll you in a plan.</p>
+  <p>Built by JChen Consulting. <span id="built"></span></p>
+</div></footer>
+
+<script>
+/*__ENGINE__*/
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var cache = {};
+  function getJSON(path) {
+    if (!cache[path]) cache[path] = fetch(path).then(function (r) { if (!r.ok) throw new Error(path + " " + r.status); return r.json(); });
+    return cache[path];
+  }
+  var store = {
+    get: function () { try { return JSON.parse(localStorage.getItem("m4m.v1") || "null"); } catch (e) { return null; } },
+    set: function (v) { try { localStorage.setItem("m4m.v1", JSON.stringify(v)); } catch (e) {} },
+    clear: function () { try { localStorage.removeItem("m4m.v1"); } catch (e) {} }
+  };
+  var EXAMPLE = { zip: "07030", ssa: "31230", drugs: [{ rx: 617310, qty: 30 }, { rx: 1364447, qty: 60 }], docs: [], mail: false, example: true };
+  var S = store.get() || JSON.parse(JSON.stringify(EXAMPLE));
+  S.drugs = S.drugs || []; S.docs = S.docs || [];
+  S.sort = S.sort || "total"; S.filters = S.filters || {};
+  var drugData = {};     // rx -> record
+  var countyRec = null, countyFile = null, zipRows = [];
+  var showN = 20;
+
+  function save() { var c = Object.assign({}, S); store.set(c); }
+  function fmt$(v) { return "$" + Math.round(v).toLocaleString("en-US"); }
+  function fmt$c(v) { return "$" + v.toLocaleString("en-US", { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 }); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function prettyDrug(n) {
+    var brand = (n.match(/\[([^\]]+)\]\s*$/) || [])[1];
+    var core = n.replace(/\s*\[[^\]]+\]\s*$/, "").replace(/\bMG\b/g, "mg").replace(/\bML\b/g, "mL").replace(/\bUNT\b/g, "units").replace(/\bMCG\b/g, "mcg").replace(/\bACTUAT\b/g, "puffs");
+    return brand ? { main: brand, sub: core } : { main: core, sub: "Generic" };
+  }
+
+  /* ---------------- ZIP & county ---------------- */
+  function loadZip(z, keepSsa) {
+    $("zipMsg").textContent = "";
+    $("countyBox").hidden = true;
+    countyRec = null; zipRows = [];
+    if (!/^\d{5}$/.test(z)) { render(); return; }
+    getJSON("data/z/" + z.slice(0, 2) + ".json").then(function (zs) {
+      zipRows = zs[z] || [];
+      if (!zipRows.length) {
+        $("zipMsg").textContent = "No 2027 Medicare Advantage plans are offered in this ZIP code. Original Medicare with a Medigap policy and a separate drug plan may be your option.";
+        render(); return;
+      }
+      var sel = $("county"); sel.innerHTML = "";
+      zipRows.forEach(function (r) { var o = document.createElement("option"); o.value = r[0]; o.textContent = r[1] + " County, " + r[2]; sel.appendChild(o); });
+      if (zipRows.length > 1) $("countyBox").hidden = false;
+      var pick = (keepSsa && zipRows.some(function (r) { return r[0] === keepSsa; })) ? keepSsa : zipRows[0][0];
+      sel.value = pick; loadCounty(pick);
+    }).catch(function () { $("zipMsg").textContent = "Couldn't look up that ZIP code. Check your connection and try again."; });
+  }
+  function loadCounty(ssa) {
+    var row = zipRows.filter(function (r) { return r[0] === ssa; })[0];
+    if (!row) return;
+    S.ssa = ssa; save();
+    getJSON("data/c/" + row[3] + ".json").then(function (cf) {
+      countyFile = cf; countyRec = cf.counties[ssa]; countyRec.label = row[1] + " County, " + row[2];
+      showN = 20; render();
+    });
+  }
+
+  /* ---------------- drugs ---------------- */
+  var drugIndex = null;
+  function ensureIndex() { if (!drugIndex) drugIndex = getJSON("data/drugs.json"); return drugIndex; }
+  function loadDrug(rx) {
+    if (drugData[rx]) return Promise.resolve(drugData[rx]);
+    return getJSON("data/d/" + (rx % 256) + ".json").then(function (b) { drugData[rx] = b[String(rx)]; return drugData[rx]; });
+  }
+  function searchDrugs(q) {
+    var toks = q.toLowerCase().split(/\s+/).filter(Boolean);
+    if (!toks.length || q.trim().length < 3) { $("drugRes").hidden = true; return; }
+    ensureIndex().then(function (idx) {
+      var hits = [];
+      for (var i = 0; i < idx.length; i++) {
+        var n = idx[i][1].toLowerCase(), ok = true;
+        for (var t = 0; t < toks.length; t++) if (n.indexOf(toks[t]) < 0) { ok = false; break; }
+        if (!ok) continue;
+        var sc = (idx[i][2] === "SCD" || idx[i][2] === "SBD" ? 0 : 50) + (n.indexOf(toks[0]) === 0 ? 0 : 10) + n.length / 20;
+        hits.push([sc, idx[i]]);
+      }
+      hits.sort(function (a, b) { return a[0] - b[0]; });
+      var box = $("drugRes"); box.innerHTML = "";
+      if (!hits.length) { box.innerHTML = '<div class="empty" style="padding:10px">No Medicare drug list includes that name. Check the spelling, or try the generic name.</div>'; box.hidden = false; return; }
+      hits.slice(0, 30).forEach(function (h) {
+        var p = prettyDrug(h[1][1]), b = document.createElement("button");
+        b.type = "button"; b.setAttribute("role", "option");
+        b.innerHTML = esc(p.main) + '<span class="sub">' + esc(p.sub) + "</span>";
+        b.addEventListener("click", function () { addDrug(h[1][0]); });
+        box.appendChild(b);
+      });
+      box.hidden = false;
+    });
+  }
+  function addDrug(rx) {
+    $("drugRes").hidden = true; $("drugQ").value = "";
+    if (S.drugs.some(function (d) { return d.rx === rx; })) return;
+    loadDrug(rx).then(function (d) {
+      S.drugs.push({ rx: rx, qty: d.q }); S.example = false; save(); renderDrugs(); render();
+    });
+  }
+  function renderDrugs() {
+    var box = $("drugList"); box.innerHTML = "";
+    $("exampleBar").hidden = !S.example;
+    if (!S.drugs.length) { box.innerHTML = '<p class="empty">No drugs added. Plans will be compared on premiums and Star Ratings.</p>'; return; }
+    S.drugs.forEach(function (sd, i) {
+      var d = drugData[sd.rx]; if (!d) return;
+      var p = prettyDrug(d.n), el = document.createElement("div"); el.className = "item";
+      var full = d.pm != null ? " · full price about " + fmt$(d.pm * sd.qty) + "/month" : "";
+      el.innerHTML = '<div class="nm">' + esc(p.main) + ' <span style="font-weight:400;color:var(--muted)">' + esc(p.sub === "Generic" ? "" : p.sub) + '</span></div>' +
+        '<div class="ctl"><label for="q' + i + '" style="margin:0;font-weight:400">Per month</label><input id="q' + i + '" type="number" min="0" step="any" value="' + sd.qty + '"> ' + esc(d.u) + '<span>' + full + '</span>' +
+        ' <button class="link" type="button" data-rm="' + i + '">Remove</button></div>';
+      box.appendChild(el);
+      el.querySelector("input").addEventListener("change", function (e) {
+        var v = parseFloat(e.target.value); if (!(v > 0)) v = d.q; sd.qty = v; S.example = false; save(); renderDrugs(); render();
+      });
+      el.querySelector("[data-rm]").addEventListener("click", function () { S.drugs.splice(i, 1); S.example = false; save(); renderDrugs(); render(); });
+    });
+  }
+
+  /* ---------------- doctors ---------------- */
+  function renderDocs() {
+    var box = $("docList"); box.innerHTML = "";
+    S.docs.forEach(function (n, i) {
+      var el = document.createElement("div"); el.className = "item";
+      el.innerHTML = '<div class="ctl" style="justify-content:space-between;color:var(--ink)"><span class="nm">' + esc(n) + '</span><button class="link" type="button">Remove</button></div>';
+      el.querySelector("button").addEventListener("click", function () { S.docs.splice(i, 1); save(); renderDocs(); render(); });
+      box.appendChild(el);
+    });
+  }
+  function addDoc() {
+    var v = $("docName").value.trim(); if (!v) return;
+    S.docs.push(v); $("docName").value = ""; save(); renderDocs(); render();
+  }
+
+  /* ---------------- results ---------------- */
+  var FILTERS = [["hmo", "HMO"], ["ppo", "PPO"], ["s4", "4+ stars"], ["p0", "$0 premium"], ["allcov", "Covers all my drugs"]];
+  function renderChips() {
+    var box = $("chips"); box.innerHTML = "";
+    FILTERS.forEach(function (f) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = f[1];
+      b.setAttribute("aria-pressed", S.filters[f[0]] ? "true" : "false");
+      b.addEventListener("click", function () { S.filters[f[0]] = !S.filters[f[0]]; save(); renderChips(); render(); });
+      box.appendChild(b);
+    });
+  }
+  function starNum(st) { return st && typeof st[0] === "number" ? st[0] : null; }
+  function starsHTML(st) {
+    var v = starNum(st);
+    if (v == null) {
+      var txt = st && st[0] ? String(st[0]) : "Not rated";
+      if (/too new/i.test(txt)) txt = "New plan, not yet rated"; else if (/not enough/i.test(txt)) txt = "Not enough data to rate";
+      return '<span class="stars" title="2027 Star Rating"><span style="color:var(--muted)">' + esc(txt) + "</span></span>";
+    }
+    return '<span class="stars" title="2027 overall Star Rating from Medicare"><span class="s" aria-hidden="true"><span class="on" style="width:' + (v / 5 * 100) + '%">★★★★★</span>★★★★★</span><strong>' + v.toFixed(1) + '</strong><span style="color:var(--muted)">of 5</span></span>';
+  }
+  function pfLink(cps) {
+    var p = cps.split("_");
+    return "https://www.medicare.gov/plan-compare/#/plan-details/2027-" + p[0] + "-" + p[1] + "-" + p[2] + "?year=2027&lang=en";
+  }
+  var FLAGS = [[1, "Prior authorization"], [2, "Step therapy"], [4, "Quantity limit"]];
+  function render() {
+    var cards = $("cards");
+    if (!countyRec) {
+      $("resTitle").textContent = "Plans near you"; $("resMeta").textContent = "";
+      cards.innerHTML = '<div class="nores">Enter your ZIP code to see the 2027 Medicare Advantage plans where you live.</div>';
+      return;
+    }
+    var need = S.drugs.filter(function (d) { return !drugData[d.rx]; });
+    if (need.length) { Promise.all(need.map(function (d) { return loadDrug(d.rx); })).then(function () { renderDrugs(); render(); }); return; }
+    var picks = S.drugs.map(function (d) { return { rx: d.rx, qty: d.qty, drug: drugData[d.rx] }; });
+    var rows = [];
+    countyRec.p.forEach(function (r) {
+      var pl = countyFile.plans[r[0]];
+      if (!pl) return;
+      if (pl.snp && !$("optSnp").checked) return;
+      if (!pl.pd && !$("optNoD").checked) return;
+      var plan = Object.assign({}, pl, { cps: r[0], ded: r[3] || 0 });
+      var premM = (r[1] || 0) + (r[2] || 0);
+      var est = plan.pd ? M4M.estimate(plan, picks, { mail: S.mail }) : null;
+      var drugYr = est ? est.total : picks.reduce(function (a, p) { return a + (p.drug.pm != null ? p.drug.pm * p.qty * 12 : 0); }, 0);
+      var allCov = plan.pd && est && est.byDrug.every(function (b) { return b.covered; });
+      var f = S.filters, t = (pl.t || "").toUpperCase();
+      if (f.hmo && t.indexOf("HMO") < 0) return;
+      if (f.ppo && t.indexOf("PPO") < 0) return;
+      if (f.s4 && !((starNum(pl.st) || 0) >= 4)) return;
+      if (f.p0 && premM > 0) return;
+      if (f.allcov && picks.length && !allCov) return;
+      rows.push({ r: r, pl: pl, plan: plan, premM: premM, est: est, drugYr: drugYr, total: premM * 12 + drugYr, allCov: allCov });
+    });
+    var key = S.sort;
+    rows.sort(function (a, b) {
+      if (key === "stars") return ((starNum(b.pl.st) || 0) - (starNum(a.pl.st) || 0)) || (a.total - b.total);
+      if (key === "premium") return (a.premM - b.premM) || (a.total - b.total);
+      if (key === "moop") return ((a.r[4] == null ? 1e9 : a.r[4]) - (b.r[4] == null ? 1e9 : b.r[4])) || (a.total - b.total);
+      return (a.total - b.total) || ((starNum(b.pl.st) || 0) - (starNum(a.pl.st) || 0));
+    });
+    $("resTitle").textContent = rows.length + " plan" + (rows.length === 1 ? "" : "s") + " in " + countyRec.label;
+    $("resMeta").textContent = (picks.length ? "Priced for your " + picks.length + " drug" + (picks.length > 1 ? "s" : "") + ", " + (S.mail ? "mail order" : "retail pharmacy") : "Add your drugs to see full yearly costs") + ". Estimated yearly cost = premiums + drug costs.";
+    cards.innerHTML = "";
+    if (!rows.length) { cards.innerHTML = '<div class="nores">No plans match these filters. Turn off a filter above to see more plans.</div>'; return; }
+    rows.slice(0, showN).forEach(function (x, i) { cards.appendChild(card(x, i === 0 && key === "total" && picks.length > 0, picks)); });
+    if (rows.length > showN) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "btn ghost more-btn";
+      b.textContent = "Show " + Math.min(20, rows.length - showN) + " more of " + (rows.length - showN) + " remaining";
+      b.addEventListener("click", function () { showN += 20; render(); });
+      cards.appendChild(b);
+    }
+  }
+  function card(x, best, picks) {
+    var pl = x.pl, el = document.createElement("article"); el.className = "card" + (best ? " best" : "");
+    var badges = '<span class="pill">' + esc(pl.t) + "</span>";
+    if (best) badges = '<span class="pill good">Lowest estimated cost</span>' + badges;
+    if (!pl.pd) badges += '<span class="pill warn">No drug coverage</span>';
+    else if (picks.length) badges += x.allCov ? '<span class="pill good">Covers all your drugs</span>' : '<span class="pill bad">Doesn\'t cover every drug</span>';
+    if (pl.sanc) badges += '<span class="pill bad">Under Medicare sanction</span>';
+    if (pl.snp === "D") badges += '<span class="pill">Premium shown before Extra Help</span>';
+    var ded = x.r[3], moop = x.r[4];
+    var h = '<div class="c-top"><div><h3 class="c-name">' + esc(pl.n) + '</h3><p class="c-org">' + esc(pl.o) + "</p></div>" +
+      '<div class="c-cost"><div class="lbl">Estimated yearly cost</div><div class="big">' + fmt$(x.total) + "</div></div></div>" +
+      '<div class="badges">' + starsHTML(pl.st) + badges + "</div>" +
+      '<div class="figs">' +
+      '<div class="fig"><div class="k">Monthly premium</div><div class="v">' + fmt$c(x.premM) + "</div></div>" +
+      '<div class="fig"><div class="k">Drug costs / year</div><div class="v">' + (pl.pd ? fmt$(x.drugYr) + (x.est && x.est.unknown ? "*" : "") : "Full price") + "</div></div>" +
+      '<div class="fig"><div class="k">Drug deductible</div><div class="v">' + (pl.pd ? fmt$(ded || 0) : "None") + "</div></div>" +
+      '<div class="fig"><div class="k">Medical max out-of-pocket</div><div class="v">' + (moop != null ? fmt$(moop) : "n/a") + "</div></div></div>";
+    var det = "";
+    if (picks.length && pl.pd && x.est) {
+      det += '<div class="tablebox"><table class="dtable"><thead><tr><th>Drug</th><th>Coverage</th><th class="num">You pay / year</th></tr></thead><tbody>';
+      x.est.byDrug.forEach(function (b, i) {
+        var d = picks[i].drug, p = prettyDrug(d.n), cov;
+        if (!b.covered) cov = '<span class="pill bad">Not covered</span> full price';
+        else {
+          cov = "Tier " + b.tier;
+          FLAGS.forEach(function (f) { if (b.flags & f[0]) cov += ' <span class="pill warn">' + f[1] + "</span>"; });
+          if (d.ins) cov += ' <span class="pill">Insulin $35 cap</span>';
+          if (d.mfp) cov += ' <span class="pill">Negotiated price</span>';
+        }
+        det += "<tr><td>" + esc(p.main) + '<br><span style="color:var(--muted);font-size:.82rem">' + esc(p.sub === "Generic" ? "" : p.sub) + "</span></td><td>" + cov + '</td><td class="num">' + (b.unknown ? "Price not available" : fmt$(b.cost)) + "</td></tr>";
+      });
+      det += "</tbody></table></div>";
+      if (x.est.capHit) det += '<p class="hint">You would reach the $2,400 drug spending limit in about month ' + Math.min(12, x.est.capHit) + ". Covered drugs cost $0 after that.</p>";
+      if (x.est.unknown) det += '<p class="hint">* No posted price for at least one drug on this plan, so its coinsurance could not be estimated.</p>';
+      if (x.est.notCovered) det += '<p class="hint">Drugs not covered count at full price and don\'t count toward the $2,400 limit. Ask your doctor about a covered alternative, or ask the plan for an exception.</p>';
+    }
+    var docs = S.docs.length ? "Confirm " + S.docs.map(esc).join(", ") + (S.docs.length > 1 ? " are" : " is") + " in this plan's network: " : "Check doctors, benefits and full plan details: ";
+    det += '<p class="docs">' + docs + '<a href="' + pfLink(x.r[0]) + '" target="_blank" rel="noopener">View this plan on Medicare.gov</a> (plan ID ' + esc(x.r[0].replace(/_/g, "-")) + ").</p>";
+    h += '<details class="more"' + (best ? " open" : "") + "><summary>Drug-by-drug costs and doctors</summary>" + det + "</details>";
+    el.innerHTML = h;
+    return el;
+  }
+
+  /* ---------------- wire up ---------------- */
+  $("zip").value = S.zip || "";
+  $("zip").addEventListener("input", function (e) {
+    var z = e.target.value.replace(/\D/g, "").slice(0, 5); e.target.value = z;
+    if (z.length === 5 && z !== S.zip) { S.zip = z; S.example = false; save(); renderDrugs(); loadZip(z); }
+    if (z.length < 5) { S.zip = z; countyRec = null; render(); }
+  });
+  $("county").addEventListener("change", function (e) { loadCounty(e.target.value); });
+  var tmr; $("drugQ").addEventListener("input", function (e) { clearTimeout(tmr); var v = e.target.value; tmr = setTimeout(function () { searchDrugs(v); }, 150); });
+  $("drugQ").addEventListener("focus", ensureIndex);
+  document.addEventListener("click", function (e) { if (!e.target.closest(".search-wrap")) $("drugRes").hidden = true; });
+  $("drugQ").addEventListener("keydown", function (e) { if (e.key === "Escape") $("drugRes").hidden = true; });
+  $("addDoc").addEventListener("click", addDoc);
+  $("docName").addEventListener("keydown", function (e) { if (e.key === "Enter") addDoc(); });
+  function setMail(m) { S.mail = m; $("phRetail").setAttribute("aria-pressed", String(!m)); $("phMail").setAttribute("aria-pressed", String(m)); save(); render(); }
+  $("phRetail").addEventListener("click", function () { setMail(false); });
+  $("phMail").addEventListener("click", function () { setMail(true); });
+  $("optSnp").checked = !!S.snp; $("optNoD").checked = !!S.nod;
+  $("optSnp").addEventListener("change", function (e) { S.snp = e.target.checked; save(); render(); });
+  $("optNoD").addEventListener("change", function (e) { S.nod = e.target.checked; save(); render(); });
+  $("sort").value = S.sort;
+  $("sort").addEventListener("change", function (e) { S.sort = e.target.value; save(); render(); });
+  $("clearAll").addEventListener("click", function () {
+    store.clear(); S = { zip: "", drugs: [], docs: [], sort: "total", filters: {}, mail: false };
+    $("zip").value = ""; countyRec = null; renderDrugs(); renderDocs(); renderChips(); setMail(false); $("zip").focus();
+  });
+  setMail(!!S.mail); renderChips(); renderDocs();
+  Promise.all(S.drugs.map(function (d) { return loadDrug(d.rx); })).then(renderDrugs);
+  getJSON("data/meta.json").then(function (m) { $("built").textContent = "Data built " + m.built + "."; });
+  if (S.zip) loadZip(S.zip, S.ssa); else render();
+})();
+</script>
