@@ -1,0 +1,23 @@
+name: probe
+on:
+  push:
+    paths: ["tools/probe_urls.txt", "tools/probe.py", ".github/workflows/probe.yml"]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/probe.py
+      - name: Save results to the results branch
+        run: |
+          mkdir -p /tmp/out && cp probe_results.json /tmp/out/
+          git config user.name "medicare4me-bot"; git config user.email "actions@users.noreply.github.com"
+          git fetch origin results || true
+          git checkout -B results origin/results 2>/dev/null || git checkout --orphan results
+          git rm -rf --cached . >/dev/null 2>&1 || true
+          mkdir -p probe && cp /tmp/out/probe_results.json probe/
+          git add probe/probe_results.json && git commit -m "probe results $(date -u +%FT%TZ)" && git push -f origin results
