@@ -33,6 +33,14 @@ jobs:
         run: python pipeline/verify.py
       - uses: actions/upload-artifact@v4
         with: { name: plans, path: site, retention-days: 7 }
+      - name: Report job status
+        if: always()
+        run: |
+          git config user.name "medicare4me-bot"; git config user.email "actions@users.noreply.github.com"
+          echo "${{ github.job }} ${{ job.status }} run ${{ github.run_id }} $(date -u +%FT%TZ)" > /tmp/status.txt
+          git checkout --orphan "status-${{ github.job }}${{ strategy.job-index != '' && format('-{0}', strategy.job-index) || '' }}" >/dev/null 2>&1
+          git rm -rf --cached . >/dev/null 2>&1 || true
+          cp /tmp/status.txt status.txt && git add status.txt && git commit -qm "status" && git push -qf origin HEAD || true
 
   discover:
     runs-on: ubuntu-latest
@@ -56,6 +64,14 @@ jobs:
           while read key url; do timeout 3000 python networks/fhir_crawl.py plan "$url" "$key" disc || echo "plan step failed for $key"; done < disc/fhir.txt
       - uses: actions/upload-artifact@v4
         with: { name: discover, path: disc, retention-days: 7 }
+      - name: Report job status
+        if: always()
+        run: |
+          git config user.name "medicare4me-bot"; git config user.email "actions@users.noreply.github.com"
+          echo "${{ github.job }} ${{ job.status }} run ${{ github.run_id }} $(date -u +%FT%TZ)" > /tmp/status.txt
+          git checkout --orphan "status-${{ github.job }}${{ strategy.job-index != '' && format('-{0}', strategy.job-index) || '' }}" >/dev/null 2>&1
+          git rm -rf --cached . >/dev/null 2>&1 || true
+          cp /tmp/status.txt status.txt && git add status.txt && git commit -qm "status" && git push -qf origin HEAD || true
 
   harvest:
     needs: discover
@@ -106,6 +122,14 @@ jobs:
         run: mkdir -p docsite/data && python doctors/build_doctors.py /tmp/nppes.zip /tmp/nucc.csv docsite/data
       - uses: actions/upload-artifact@v4
         with: { name: doctors, path: docsite, retention-days: 7 }
+      - name: Report job status
+        if: always()
+        run: |
+          git config user.name "medicare4me-bot"; git config user.email "actions@users.noreply.github.com"
+          echo "${{ github.job }} ${{ job.status }} run ${{ github.run_id }} $(date -u +%FT%TZ)" > /tmp/status.txt
+          git checkout --orphan "status-${{ github.job }}${{ strategy.job-index != '' && format('-{0}', strategy.job-index) || '' }}" >/dev/null 2>&1
+          git rm -rf --cached . >/dev/null 2>&1 || true
+          cp /tmp/status.txt status.txt && git add status.txt && git commit -qm "status" && git push -qf origin HEAD || true
 
   assemble:
     needs: [plans, harvest, doctors]
